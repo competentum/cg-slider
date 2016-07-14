@@ -1,0 +1,41 @@
+{
+  "name": "cg-slider",
+  "version": "0.0.1",
+  "description": "Accessible Slider Component",
+  "main": "src/index.js",
+  "scripts": {
+    "build": "webpack",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/competentum/cg-slider.git"
+  },
+  "keywords": [
+    "slider",
+    "ADA"
+  ],
+  "author": "Alexey Pilyugin",
+  "license": "MIT",
+  "devDependencies": {
+    "cg-components-banner": "latest",
+    "css-loader": "^0.23.1",
+    "gulp": "^3.9.1",
+    "gulp-util": "^3.0.7",
+    "less": "^2.6.1",
+    "less-loader": "^2.2.2",
+    "path": "^0.12.7",
+    "style-loader": "^0.13.0",
+    "uppercamelcase": "^1.1.0",
+    "url-loader": "^0.5.7",
+    "webpack": "^1.12.14",
+    "webpack-dev-server": "^1.14.1"
+  },
+  "dependencies": {
+    "dom-shims": "^0.1.4",
+    "events": "^1.1.0",
+    "inherits": "^2.0.1",
+    "keycode.js": "0.0.1",
+    "merge": "^1.2.0"
+  }
+}
