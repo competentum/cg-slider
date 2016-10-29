@@ -3,7 +3,7 @@ var path = require('path');
 var cgBanner = require('cg-components-banner');
 var upperCamelCase = require('uppercamelcase');
 
-var buildPath = path.resolve(__dirname, '.');
+var buildPath = path.resolve(__dirname, './build');
 
 var pkg = require('./package.json');
 var banner = pkg.name + ' v' + pkg.version + ' - ' + pkg.description + '\n\n' + cgBanner;
@@ -36,6 +36,14 @@ module.exports = {
             {
                 test: /\.(png|svg)$/i,
                 loader: "url-loader?limit=100000"
+            },
+            {
+                test: /\.js$/,
+                exclude: /(node_modules|bower_components)/,
+                loader: 'babel',
+                query: {
+                    presets: ['es2015']
+                }
             }
         ]
     }

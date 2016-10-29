@@ -70,10 +70,25 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
+	var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
 	__webpack_require__(2);
 
-	var EventEmitter = __webpack_require__(6);
-	var inherits = __webpack_require__(7);
+	var _events = __webpack_require__(6);
+
+	var _events2 = _interopRequireDefault(_events);
+
+	var _merge = __webpack_require__(7);
+
+	var _merge2 = _interopRequireDefault(_merge);
+
+	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+	function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+	function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 	/**
 	 * Slider's customizing settings
@@ -83,39 +98,73 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {number} step
 	 */
 
-	function CgSlider(settings) {
-	  EventEmitter.call(this);
-	  this._applySettings(settings);
-	  this._render();
-	  this._addListeners();
-	}
-	inherits(CgSlider, EventEmitter);
+	var CgSlider = function (_EventEmitter) {
+	  _inherits(CgSlider, _EventEmitter);
 
-	/** @type SliderSettings */
-	CgSlider.DEFAULT_SETTINGS = {
-	  min: 0,
-	  max: 100,
-	  step: 1
-	};
+	  _createClass(CgSlider, null, [{
+	    key: 'DEFAULT_SETTINGS',
 
-	CgSlider.EVENTS = {
-	  CHANGE: 'change',
-	  START_CHANGE: 'start_change',
-	  STOP_CHANGE: 'stop_change'
-	};
 
-	CgSlider.prototype._addListeners = function _addListeners() {
-	  //todo:
-	};
+	    /**
+	     *
+	     * @returns {SliderSettings}
+	     * @constructor
+	     */
+	    get: function get() {
+	      if (!this._DEFAULT_SETTINGS) {
+	        this._DEFAULT_SETTINGS = {
+	          min: 0,
+	          max: 100,
+	          step: 1
+	        };
+	      }
+	      return this._DEFAULT_SETTINGS;
+	    }
+	  }, {
+	    key: 'EVENTS',
+	    get: function get() {
+	      if (!this._EVENTS) {
+	        this._EVENTS = {
+	          CHANGE: 'change',
+	          START_CHANGE: 'start_change',
+	          STOP_CHANGE: 'stop_change'
+	        };
+	      }
+	      return this._EVENTS;
+	    }
+	  }]);
 
-	CgSlider.prototype._applySettings = function (settings) {
-	  /** @type SliderSettings */
-	  this.settings = merge({}, this.constructor.DEFAULT_SETTINGS, settings);
-	};
+	  function CgSlider(settings) {
+	    _classCallCheck(this, CgSlider);
 
-	CgSlider.prototype._render = function () {
-	  //todo:
-	};
+	    var _this = _possibleConstructorReturn(this, (CgSlider.__proto__ || Object.getPrototypeOf(CgSlider)).call(this));
+
+	    _this._applySettings(settings);
+	    _this._render();
+	    _this._addListeners();
+	    return _this;
+	  }
+
+	  _createClass(CgSlider, [{
+	    key: '_addListeners',
+	    value: function _addListeners() {
+	      //todo:
+	    }
+	  }, {
+	    key: '_applySettings',
+	    value: function _applySettings(settings) {
+	      /** @type SliderSettings */
+	      this.settings = (0, _merge2.default)({}, this.constructor.DEFAULT_SETTINGS, settings);
+	    }
+	  }, {
+	    key: '_render',
+	    value: function _render() {
+	      //todo:
+	    }
+	  }]);
+
+	  return CgSlider;
+	}(_events2.default);
 
 	module.exports = CgSlider;
 
@@ -777,30 +826,198 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 7 */
+/***/ function(module, exports, __webpack_require__) {
+
+	/* WEBPACK VAR INJECTION */(function(module) {/*!
+	 * @name JavaScript/NodeJS Merge v1.2.0
+	 * @author yeikos
+	 * @repository https://github.com/yeikos/js.merge
+
+	 * Copyright 2014 yeikos - MIT license
+	 * https://raw.github.com/yeikos/js.merge/master/LICENSE
+	 */
+
+	;(function(isNode) {
+
+		/**
+		 * Merge one or more objects 
+		 * @param bool? clone
+		 * @param mixed,... arguments
+		 * @return object
+		 */
+
+		var Public = function(clone) {
+
+			return merge(clone === true, false, arguments);
+
+		}, publicName = 'merge';
+
+		/**
+		 * Merge two or more objects recursively 
+		 * @param bool? clone
+		 * @param mixed,... arguments
+		 * @return object
+		 */
+
+		Public.recursive = function(clone) {
+
+			return merge(clone === true, true, arguments);
+
+		};
+
+		/**
+		 * Clone the input removing any reference
+		 * @param mixed input
+		 * @return mixed
+		 */
+
+		Public.clone = function(input) {
+
+			var output = input,
+				type = typeOf(input),
+				index, size;
+
+			if (type === 'array') {
+
+				output = [];
+				size = input.length;
+
+				for (index=0;index<size;++index)
+
+					output[index] = Public.clone(input[index]);
+
+			} else if (type === 'object') {
+
+				output = {};
+
+				for (index in input)
+
+					output[index] = Public.clone(input[index]);
+
+			}
+
+			return output;
+
+		};
+
+		/**
+		 * Merge two objects recursively
+		 * @param mixed input
+		 * @param mixed extend
+		 * @return mixed
+		 */
+
+		function merge_recursive(base, extend) {
+
+			if (typeOf(base) !== 'object')
+
+				return extend;
+
+			for (var key in extend) {
+
+				if (typeOf(base[key]) === 'object' && typeOf(extend[key]) === 'object') {
+
+					base[key] = merge_recursive(base[key], extend[key]);
+
+				} else {
+
+					base[key] = extend[key];
+
+				}
+
+			}
+
+			return base;
+
+		}
+
+		/**
+		 * Merge two or more objects
+		 * @param bool clone
+		 * @param bool recursive
+		 * @param array argv
+		 * @return object
+		 */
+
+		function merge(clone, recursive, argv) {
+
+			var result = argv[0],
+				size = argv.length;
+
+			if (clone || typeOf(result) !== 'object')
+
+				result = {};
+
+			for (var index=0;index<size;++index) {
+
+				var item = argv[index],
+
+					type = typeOf(item);
+
+				if (type !== 'object') continue;
+
+				for (var key in item) {
+
+					var sitem = clone ? Public.clone(item[key]) : item[key];
+
+					if (recursive) {
+
+						result[key] = merge_recursive(result[key], sitem);
+
+					} else {
+
+						result[key] = sitem;
+
+					}
+
+				}
+
+			}
+
+			return result;
+
+		}
+
+		/**
+		 * Get type of variable
+		 * @param mixed input
+		 * @return string
+		 *
+		 * @see http://jsperf.com/typeofvar
+		 */
+
+		function typeOf(input) {
+
+			return ({}).toString.call(input).slice(8, -1).toLowerCase();
+
+		}
+
+		if (isNode) {
+
+			module.exports = Public;
+
+		} else {
+
+			window[publicName] = Public;
+
+		}
+
+	})(typeof module === 'object' && module && typeof module.exports === 'object' && module.exports);
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)(module)))
+
+/***/ },
+/* 8 */
 /***/ function(module, exports) {
 
-	if (typeof Object.create === 'function') {
-	  // implementation from standard node.js 'util' module
-	  module.exports = function inherits(ctor, superCtor) {
-	    ctor.super_ = superCtor
-	    ctor.prototype = Object.create(superCtor.prototype, {
-	      constructor: {
-	        value: ctor,
-	        enumerable: false,
-	        writable: true,
-	        configurable: true
-	      }
-	    });
-	  };
-	} else {
-	  // old school shim for old browsers
-	  module.exports = function inherits(ctor, superCtor) {
-	    ctor.super_ = superCtor
-	    var TempCtor = function () {}
-	    TempCtor.prototype = superCtor.prototype
-	    ctor.prototype = new TempCtor()
-	    ctor.prototype.constructor = ctor
-	  }
+	module.exports = function(module) {
+		if(!module.webpackPolyfill) {
+			module.deprecate = function() {};
+			module.paths = [];
+			// module.parent = undefined by default
+			module.children = [];
+			module.webpackPolyfill = 1;
+		}
+		return module;
 	}
 
 

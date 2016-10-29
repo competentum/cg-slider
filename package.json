@@ -18,6 +18,9 @@
   "author": "Alexey Pilyugin",
   "license": "MIT",
   "devDependencies": {
+    "babel-core": "^6.18.0",
+    "babel-loader": "^6.2.7",
+    "babel-preset-es2015": "^6.18.0",
     "cg-components-banner": "latest",
     "css-loader": "^0.23.1",
     "gulp": "^3.9.1",
@@ -34,7 +37,6 @@
   "dependencies": {
     "dom-shims": "^0.1.4",
     "events": "^1.1.0",
-    "inherits": "^2.0.1",
     "keycode.js": "0.0.1",
     "merge": "^1.2.0"
   }

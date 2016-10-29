@@ -1,9 +1,9 @@
 'use strict';
 
-require('./common.less');
+import './common.less';
 
-var EventEmitter = require('events');
-var inherits = require('inherits');
+import EventEmitter from 'events';
+import merge from 'merge';
 
 /**
  * Slider's customizing settings
@@ -13,38 +13,54 @@ var inherits = require('inherits');
  * @property {number} step
  */
 
-function CgSlider(settings) {
-  EventEmitter.call(this);
-  this._applySettings(settings);
-  this._render();
-  this._addListeners();
+class CgSlider extends EventEmitter {
+
+  /**
+   *
+   * @returns {SliderSettings}
+   * @constructor
+   */
+  static get DEFAULT_SETTINGS() {
+    if (!this._DEFAULT_SETTINGS) {
+      this._DEFAULT_SETTINGS = {
+        min : 0,
+        max : 100,
+        step: 1
+      };
+    }
+    return this._DEFAULT_SETTINGS;
+  }
+
+  static get EVENTS() {
+    if (!this._EVENTS) {
+      this._EVENTS = {
+        CHANGE      : 'change',
+        START_CHANGE: 'start_change',
+        STOP_CHANGE : 'stop_change'
+      };
+    }
+    return this._EVENTS;
+  }
+
+  constructor(settings) {
+    super();
+    this._applySettings(settings);
+    this._render();
+    this._addListeners();
+  }
+
+  _addListeners() {
+    //todo:
+  }
+
+  _applySettings(settings) {
+    /** @type SliderSettings */
+    this.settings = merge({}, this.constructor.DEFAULT_SETTINGS, settings);
+  }
+
+  _render() {
+    //todo:
+  }
 }
-inherits(CgSlider, EventEmitter);
-
-/** @type SliderSettings */
-CgSlider.DEFAULT_SETTINGS = {
-  min: 0,
-  max: 100,
-  step: 1
-};
-
-CgSlider.EVENTS = {
-  CHANGE: 'change',
-  START_CHANGE: 'start_change',
-  STOP_CHANGE: 'stop_change'
-};
-
-CgSlider.prototype._addListeners = function _addListeners() {
-  //todo:
-};
-
-CgSlider.prototype._applySettings = function (settings) {
-  /** @type SliderSettings */
-  this.settings = merge({}, this.constructor.DEFAULT_SETTINGS, settings);
-};
-
-CgSlider.prototype._render = function () {
-  //todo:
-};
 
 module.exports = CgSlider;
