@@ -82,6 +82,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _merge2 = _interopRequireDefault(_merge);
 
+	var _utils = __webpack_require__(9);
+
+	var _utils2 = _interopRequireDefault(_utils);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -93,10 +97,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * Slider's customizing settings
 	 * @typedef {Object} SliderSettings
+	 * @property {Element|string} container - DOM Element or element id in which slider should be rendered.
+	 *                                        This property can be omitted. In this case new DOM element will be created and can be accessed via `sliderInstance.container`
 	 * @property {number} min - Minimum slider value.
 	 * @property {number} max - Maximum slider value.
 	 * @property {number} step
 	 */
+
+	var SLIDER_CLASS = 'cg-slider';
+	var SLIDER_BG = SLIDER_CLASS + '-bg';
+	var PROGRESS_CLASS = SLIDER_CLASS + '-progress';
+	var HANDLE_CLASS = SLIDER_CLASS + '-handle';
 
 	var CgSlider = function (_EventEmitter) {
 	  _inherits(CgSlider, _EventEmitter);
@@ -137,6 +148,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  function CgSlider(settings) {
 	    _classCallCheck(this, CgSlider);
 
+	    //console.log(this.keys());
 	    var _this = _possibleConstructorReturn(this, (CgSlider.__proto__ || Object.getPrototypeOf(CgSlider)).call(this));
 
 	    _this._applySettings(settings);
@@ -144,6 +156,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	    _this._addListeners();
 	    return _this;
 	  }
+
+	  /**
+	   * DOM Element which contains slider.
+	   * @returns {Element}
+	   */
+
 
 	  _createClass(CgSlider, [{
 	    key: '_addListeners',
@@ -153,13 +171,111 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: '_applySettings',
 	    value: function _applySettings(settings) {
+	      var DEFAULT_SETTINGS = this.constructor.DEFAULT_SETTINGS;
+
+	      settings = (0, _merge2.default)({}, DEFAULT_SETTINGS, settings);
 	      /** @type SliderSettings */
-	      this.settings = (0, _merge2.default)({}, this.constructor.DEFAULT_SETTINGS, settings);
+	      this._settings = {};
+
+	      //
+	      if (settings.container instanceof Element) {
+	        this._container = settings.container;
+	      } else if (typeof settings.container === 'string') {
+	        this._container = document.getElementById(settings.container);
+	        if (!this.container) {
+	          throw new Error(this.constructor.name + ' initialization error: can not find element with id "' + settings.container + '".');
+	        }
+	      } else if (typeof settings.container === 'undefined') {
+	        //todo: create container
+	        this._container = document.createElement('div');
+	      } else {
+	        throw new Error(this.constructor.name + ' initialization error: type of "settings.container" property is unsupported.');
+	      }
+	      delete settings.container;
+
+	      // call setters for settings which defined in DEFAULT_SETTINGS only
+	      for (var key in DEFAULT_SETTINGS) {
+	        if (DEFAULT_SETTINGS.hasOwnProperty(key)) {
+	          this[key] = settings[key];
+	        }
+	      }
 	    }
 	  }, {
 	    key: '_render',
 	    value: function _render() {
-	      //todo:
+	      var elementHTML = '\n      <div class="' + SLIDER_CLASS + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n        </div>\n        <div class="' + HANDLE_CLASS + '"></div>\n      </div>\n    ';
+
+	      this._rootElement = _utils2.default.createHTML(elementHTML);
+	      this._progressElement = this._rootElement.querySelector('.' + PROGRESS_CLASS);
+	      this._handleElement = this._rootElement.querySelector('.' + HANDLE_CLASS);
+
+	      this.container.appendChild(this._rootElement);
+
+	      // todo: remove this code when interactive will be added
+	      this._progressElement.style.width = '50%';
+	      this._handleElement.style.left = '50%';
+	    }
+	  }, {
+	    key: 'container',
+	    get: function get() {
+	      return this._container;
+	    }
+
+	    /**
+	     *
+	     * @returns {number}
+	     */
+
+	  }, {
+	    key: 'min',
+	    get: function get() {
+	      return this._settings.min;
+	    }
+	    /**
+	     *
+	     * @param {number} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this._settings.min = val;
+	    }
+
+	    /**
+	     *
+	     * @returns {number}
+	     */
+
+	  }, {
+	    key: 'max',
+	    get: function get() {
+	      return this._settings.max;
+	    }
+	    /**
+	     *
+	     * @param {number} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this._settings.max = val;
+	    }
+
+	    /**
+	     *
+	     * @returns {number}
+	     */
+
+	  }, {
+	    key: 'step',
+	    get: function get() {
+	      return this._settings.step;
+	    }
+	    /**
+	     *
+	     * @param {number} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this._settings.step = val;
 	    }
 	  }]);
 
@@ -203,7 +319,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	// module
-	exports.push([module.id, ".cg-slider {\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n}\n", ""]);
+	exports.push([module.id, ".cg-slider {\n  padding: 7px;\n  position: relative;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n}\n.cg-slider .cg-slider-bg {\n  height: 6px;\n  background: #aaaaaa;\n  position: relative;\n}\n.cg-slider .cg-slider-progress {\n  height: 100%;\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle {\n  top: 0;\n  left: 0;\n  border-radius: 50%;\n  position: absolute;\n  height: 20px;\n  width: 20px;\n  background: #17AC5B;\n}\n", ""]);
 
 	// exports
 
@@ -1020,6 +1136,58 @@ return /******/ (function(modules) { // webpackBootstrap
 		return module;
 	}
 
+
+/***/ },
+/* 9 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	    value: true
+	});
+	exports.default = {
+
+	    /**
+	     *
+	     * @param {Element} element
+	     * @param {string} className
+	     */
+	    addClass: function addClass(element, className) {
+	        var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
+	        if (re.test(element.className)) return;
+	        element.className = (element.className + " " + className).replace(/\s+/g, " ").replace(/(^ | $)/g, "");
+	    },
+
+	    /**
+	     *
+	     * @param {Element} element
+	     * @param {string} className
+	     */
+	    removeClass: function removeClass(element, className) {
+	        var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
+	        element.className = element.className.replace(re, "$1").replace(/\s+/g, " ").replace(/(^ | $)/g, "");
+	    },
+
+	    /**
+	     * Removes current node from tree.
+	     * @param {Node} node
+	     */
+	    removeNode: function removeNode(node) {
+	        if (node.parentNode) node.parentNode.removeChild(node);
+	    },
+
+	    /**
+	     *
+	     * @param {string} html
+	     * @returns {Node}
+	     */
+	    createHTML: function createHTML(html) {
+	        var div = document.createElement('div');
+	        div.innerHTML = html.trim();
+	        return div.firstChild;
+	    }
+	};
 
 /***/ }
 /******/ ])

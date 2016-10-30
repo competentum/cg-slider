@@ -1,6 +1,33 @@
+@main-color: #17AC5B;
+@bg-color: #aaaaaa;
+@handle-size: 20px;
+@bar-height: 6px;
 
 .cg-slider {
+  padding: (@handle-size - @bar-height)/2;
+  position: relative;
   .user-select(none);
+
+  .cg-slider-bg {
+    height: @bar-height;
+    background: @bg-color;
+    position: relative;
+  }
+
+  .cg-slider-progress {
+    height: 100%;
+    background: @main-color;
+  }
+
+  .cg-slider-handle {
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+    position: absolute;
+    height: @handle-size;
+    width: @handle-size;
+    background: @main-color;
+  }
 }
 
 .user-select(@value) {
