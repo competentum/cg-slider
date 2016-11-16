@@ -1,6 +1,9 @@
 @main-color: #17AC5B;
 @bg-color: #aaaaaa;
-@handle-size: 20px;
+@handle-size: 18px;
+@handle-hidden-border: 4px;
+@handle-hover-size: @handle-size + 2*@handle-hidden-border;
+@handle-grow-time: 0.3s;
 @bar-height: 6px;
 
 .cg-slider {
@@ -20,13 +23,53 @@
   }
 
   .cg-slider-handle {
-    top: 0;
+    top: 50%;
     left: 0;
     border-radius: 50%;
     position: absolute;
     height: @handle-size;
     width: @handle-size;
     background: @main-color;
+    cursor: pointer;
+    margin-left: -@handle-size/2;
+    margin-top: -@handle-size/2;
+
+    &:before,
+    &:after {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      top: 0;
+      border-radius: 50%;
+    }
+
+    &:after {
+      transition: left @handle-grow-time, right @handle-grow-time, bottom @handle-grow-time, top @handle-grow-time;
+    }
+
+    &:before,
+    &:hover:after,
+    &:active:after {
+      left: -@handle-hidden-border;
+      right: -@handle-hidden-border;
+      bottom: -@handle-hidden-border;
+      top: -@handle-hidden-border;
+    }
+
+    &:hover:after,
+    &:active:after {
+      background: @main-color;
+    }
+
+    &:focus {
+      outline: none;
+
+      &:before{
+        background-color: fadeout(@main-color, 60);
+      }
+    }
   }
 }
 

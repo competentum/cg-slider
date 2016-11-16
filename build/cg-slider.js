@@ -86,6 +86,10 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _utils2 = _interopRequireDefault(_utils);
 
+	var _helpFuncs = __webpack_require__(10);
+
+	var _helpFuncs2 = _interopRequireDefault(_helpFuncs);
+
 	function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 	function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -102,17 +106,61 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {number} min - Minimum slider value.
 	 * @property {number} max - Maximum slider value.
 	 * @property {number} step
+	 * @property {number|number[]} tabindex - tabindex of handle element. It can be array of two numbers for range slider.
 	 */
 
 	var SLIDER_CLASS = 'cg-slider';
 	var SLIDER_BG = SLIDER_CLASS + '-bg';
 	var PROGRESS_CLASS = SLIDER_CLASS + '-progress';
 	var HANDLE_CLASS = SLIDER_CLASS + '-handle';
+	var MIN_HANDLE_CLASS = SLIDER_CLASS + '-handle-min';
+	var MAX_HANDLE_CLASS = SLIDER_CLASS + '-handle-max';
 
 	var CgSlider = function (_EventEmitter) {
 	  _inherits(CgSlider, _EventEmitter);
 
 	  _createClass(CgSlider, null, [{
+	    key: '_fixSetting',
+	    value: function _fixSetting(name, setting) {
+	      var constructor = this; // without this declaration IDE will highlight static variables as error
+	      switch (name) {
+	        case 'tabindex':
+	          if (typeof setting === 'number') {
+	            setting = [setting, setting];
+	          } else if (Array.isArray(setting)) {
+	            if (setting.length > 2) {
+	              setting.length = 2;
+	            } else {
+	              while (setting.length < 2) {
+	                setting.push(setting[0] || constructor.DEFAULT_SETTINGS.tabindex[0]);
+	              }
+	            }
+	          }
+	          break;
+
+	        default:
+	          break;
+	      }
+	      return setting;
+	    }
+
+	    /**
+	     * Fixes settings object.
+	     * @param {SliderSettings} settings
+	     * @returns {SliderSettings}
+	     * @private
+	     */
+
+	  }, {
+	    key: '_normalizeSettings',
+	    value: function _normalizeSettings(settings) {
+	      for (var name in settings) {
+	        settings[name] = this._fixSetting(name, settings[name]);
+	      }
+
+	      return settings;
+	    }
+	  }, {
 	    key: 'DEFAULT_SETTINGS',
 
 
@@ -126,7 +174,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._DEFAULT_SETTINGS = {
 	          min: 0,
 	          max: 100,
-	          step: 1
+	          step: 1,
+	          tabindex: [0, 0]
 	        };
 	      }
 	      return this._DEFAULT_SETTINGS;
@@ -167,6 +216,50 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: '_addListeners',
 	    value: function _addListeners() {
 	      //todo:
+	      var self = this;
+	      this._minHandleElement.addEventListener('mousedown', onmousedown);
+
+	      var dragData = {
+	        startHandlePos: null,
+	        startMousePos: null,
+	        dragHandle: null,
+	        containerWidth: null
+	      };
+
+	      function onmousedown(e) {
+	        _utils2.default.extendEventObject(e);
+
+	        dragData.dragHandle = this;
+	        dragData.containerWidth = self._handlesContainer.getBoundingClientRect().width;
+	        dragData.startHandlePos = _helpFuncs2.default.getHandlePosition(this, self._handlesContainer);
+	        dragData.startMousePos = {
+	          x: e.px,
+	          y: e.py
+	        };
+
+	        document.addEventListener('mousemove', onmousemove);
+	        document.addEventListener('mouseup', onmouseup);
+	      }
+
+	      function onmousemove(e) {
+	        _utils2.default.extendEventObject(e);
+	        var percent = _helpFuncs2.default.getPercent(dragData.startHandlePos.x + e.px - dragData.startMousePos.x, dragData.containerWidth);
+	        dragData.dragHandle.style.left = percent + '%';
+	        self._progressElement.style.width = percent + '%';
+	      }
+
+	      function onmouseup(e) {
+	        _utils2.default.extendEventObject(e);
+	        document.removeEventListener('mousemove', onmousemove);
+	        document.removeEventListener('mouseup', onmouseup);
+
+	        // clear dragData
+	        for (var key in dragData) {
+	          if (dragData.hasOwnProperty(key)) {
+	            dragData[key] = null;
+	          }
+	        }
+	      }
 	    }
 	  }, {
 	    key: '_applySettings',
@@ -174,6 +267,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var DEFAULT_SETTINGS = this.constructor.DEFAULT_SETTINGS;
 
 	      settings = (0, _merge2.default)({}, DEFAULT_SETTINGS, settings);
+	      this.constructor._normalizeSettings(settings);
+
 	      /** @type SliderSettings */
 	      this._settings = {};
 
@@ -203,17 +298,19 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: '_render',
 	    value: function _render() {
-	      var elementHTML = '\n      <div class="' + SLIDER_CLASS + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n        </div>\n        <div class="' + HANDLE_CLASS + '"></div>\n      </div>\n    ';
+	      var elementHTML = '\n      <div class="' + SLIDER_CLASS + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MIN_HANDLE_CLASS + '" tabindex="' + this.tabindex[0] + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MAX_HANDLE_CLASS + '" tabindex="' + this.tabindex[1] + '" style="display: none;"></div>\n        </div>\n      </div>\n    ';
 
 	      this._rootElement = _utils2.default.createHTML(elementHTML);
 	      this._progressElement = this._rootElement.querySelector('.' + PROGRESS_CLASS);
-	      this._handleElement = this._rootElement.querySelector('.' + HANDLE_CLASS);
+	      this._handlesContainer = this._rootElement.querySelector('.' + SLIDER_BG);
+	      this._minHandleElement = this._handlesContainer.querySelector('.' + MIN_HANDLE_CLASS);
+	      this._maxHandleElement = this._handlesContainer.querySelector('.' + MAX_HANDLE_CLASS);
 
 	      this.container.appendChild(this._rootElement);
 
 	      // todo: remove this code when interactive will be added
 	      this._progressElement.style.width = '50%';
-	      this._handleElement.style.left = '50%';
+	      this._minHandleElement.style.left = '50%';
 	    }
 	  }, {
 	    key: 'container',
@@ -231,6 +328,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    get: function get() {
 	      return this._settings.min;
 	    }
+
 	    /**
 	     *
 	     * @param {number} val
@@ -238,6 +336,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ,
 	    set: function set(val) {
 	      this._settings.min = val;
+	      //todo:
 	    }
 
 	    /**
@@ -250,6 +349,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    get: function get() {
 	      return this._settings.max;
 	    }
+
 	    /**
 	     *
 	     * @param {number} val
@@ -257,6 +357,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ,
 	    set: function set(val) {
 	      this._settings.max = val;
+	      //todo:
 	    }
 
 	    /**
@@ -269,6 +370,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    get: function get() {
 	      return this._settings.step;
 	    }
+
 	    /**
 	     *
 	     * @param {number} val
@@ -276,6 +378,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ,
 	    set: function set(val) {
 	      this._settings.step = val;
+	      //todo:
+	    }
+
+	    /**
+	     *
+	     * @returns {number[]}
+	     */
+
+	  }, {
+	    key: 'tabindex',
+	    get: function get() {
+	      return this._settings.tabindex;
+	    }
+
+	    /**
+	     *
+	     * @param {number[]} val
+	     */
+	    ,
+	    set: function set(val) {
+	      val = this.constructor._fixSetting('tabindex', val);
+	      this._settings.tabindex = val;
+	      if (this._minHandleElement) {
+	        this._minHandleElement.setAttribute('tabindex', this._settings.tabindex[0]);
+	      }
+	      if (this._maxHandleElement) {
+	        this._maxHandleElement.setAttribute('tabindex', this._settings.tabindex[1]);
+	      }
 	    }
 	  }]);
 
@@ -319,7 +449,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	// module
-	exports.push([module.id, ".cg-slider {\n  padding: 7px;\n  position: relative;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n}\n.cg-slider .cg-slider-bg {\n  height: 6px;\n  background: #aaaaaa;\n  position: relative;\n}\n.cg-slider .cg-slider-progress {\n  height: 100%;\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle {\n  top: 0;\n  left: 0;\n  border-radius: 50%;\n  position: absolute;\n  height: 20px;\n  width: 20px;\n  background: #17AC5B;\n}\n", ""]);
+	exports.push([module.id, ".cg-slider {\n  padding: 6px;\n  position: relative;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n}\n.cg-slider .cg-slider-bg {\n  height: 6px;\n  background: #aaaaaa;\n  position: relative;\n}\n.cg-slider .cg-slider-progress {\n  height: 100%;\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle {\n  top: 50%;\n  left: 0;\n  border-radius: 50%;\n  position: absolute;\n  height: 18px;\n  width: 18px;\n  background: #17AC5B;\n  cursor: pointer;\n  margin-left: -9px;\n  margin-top: -9px;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:after {\n  content: \"\";\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  top: 0;\n  border-radius: 50%;\n}\n.cg-slider .cg-slider-handle:after {\n  transition: left 0.3s, right 0.3s, bottom 0.3s, top 0.3s;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  left: -4px;\n  right: -4px;\n  bottom: -4px;\n  top: -4px;\n}\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle:focus {\n  outline: none;\n}\n.cg-slider .cg-slider-handle:focus:before {\n  background-color: rgba(23, 172, 91, 0.4);\n}\n", ""]);
 
 	// exports
 
@@ -1144,49 +1274,106 @@ return /******/ (function(modules) { // webpackBootstrap
 	'use strict';
 
 	Object.defineProperty(exports, "__esModule", {
-	    value: true
+	  value: true
 	});
 	exports.default = {
 
-	    /**
-	     *
-	     * @param {Element} element
-	     * @param {string} className
-	     */
-	    addClass: function addClass(element, className) {
-	        var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
-	        if (re.test(element.className)) return;
-	        element.className = (element.className + " " + className).replace(/\s+/g, " ").replace(/(^ | $)/g, "");
-	    },
+	  /**
+	   *
+	   * @param {Element} element
+	   * @param {string} className
+	   */
+	  addClass: function addClass(element, className) {
+	    var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
+	    if (re.test(element.className)) return;
+	    element.className = (element.className + " " + className).replace(/\s+/g, " ").replace(/(^ | $)/g, "");
+	  },
 
-	    /**
-	     *
-	     * @param {Element} element
-	     * @param {string} className
-	     */
-	    removeClass: function removeClass(element, className) {
-	        var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
-	        element.className = element.className.replace(re, "$1").replace(/\s+/g, " ").replace(/(^ | $)/g, "");
-	    },
+	  /**
+	   *
+	   * @param {Element} element
+	   * @param {string} className
+	   */
+	  removeClass: function removeClass(element, className) {
+	    var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
+	    element.className = element.className.replace(re, "$1").replace(/\s+/g, " ").replace(/(^ | $)/g, "");
+	  },
 
-	    /**
-	     * Removes current node from tree.
-	     * @param {Node} node
-	     */
-	    removeNode: function removeNode(node) {
-	        if (node.parentNode) node.parentNode.removeChild(node);
-	    },
+	  /**
+	   * Removes current node from tree.
+	   * @param {Node} node
+	   */
+	  removeNode: function removeNode(node) {
+	    if (node.parentNode) node.parentNode.removeChild(node);
+	  },
 
-	    /**
-	     *
-	     * @param {string} html
-	     * @returns {Node}
-	     */
-	    createHTML: function createHTML(html) {
-	        var div = document.createElement('div');
-	        div.innerHTML = html.trim();
-	        return div.firstChild;
+	  /**
+	   *
+	   * @param {string} html
+	   * @returns {Node}
+	   */
+	  createHTML: function createHTML(html) {
+	    var div = document.createElement('div');
+	    div.innerHTML = html.trim();
+	    return div.firstChild;
+	  },
+
+	  /**
+	   * Adds coordinates to event object independently of event from touching or mouse. (cx, cy - client coordinates, px, py - page coordinates)
+	   * @param event
+	   */
+	  extendEventObject: function extendEventObject(event) {
+	    if (event.touches && event.touches[0]) {
+	      event.cx = event.touches[0].clientX;
+	      event.cy = event.touches[0].clientY;
+	      event.px = event.touches[0].pageX;
+	      event.py = event.touches[0].pageY;
+	    } else if (event.changedTouches && event.changedTouches[0]) {
+	      event.cx = event.changedTouches[0].clientX;
+	      event.cy = event.changedTouches[0].clientY;
+	      event.px = event.changedTouches[0].pageX;
+	      event.py = event.changedTouches[0].pageY;
+	    } else {
+	      event.cx = event.clientX;
+	      event.cy = event.clientY;
+	      event.px = event.pageX;
+	      event.py = event.pageY;
 	    }
+	  }
+	};
+
+/***/ },
+/* 10 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	Object.defineProperty(exports, "__esModule", {
+	  value: true
+	});
+	exports.default = {
+
+	  /**
+	   * Returns position of the handle's center in container.
+	   * @param {Element} handleElement
+	   * @param {Element} container
+	   * @returns {{x: number, y: number}}
+	   */
+	  getHandlePosition: function getHandlePosition(handleElement, container) {
+	    container = container || handleElement.parentElement;
+
+	    var bounds = handleElement.getBoundingClientRect();
+	    var containerBounds = container.getBoundingClientRect();
+
+	    return {
+	      x: (bounds.left + bounds.right) / 2 - containerBounds.left,
+	      y: (bounds.top + bounds.bottom) / 2 - containerBounds.top
+	    };
+	  },
+
+	  getPercent: function getPercent(val, max) {
+	    return Math.min(100, Math.max(0, 100 * val / max));
+	  }
 	};
 
 /***/ }
