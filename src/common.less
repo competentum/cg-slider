@@ -9,7 +9,7 @@
 .cg-slider {
   padding: (@handle-size - @bar-height)/2;
   position: relative;
-  .user-select(none);
+  user-select: none;
 
   .cg-slider-bg {
     height: @bar-height;
@@ -18,6 +18,9 @@
   }
 
   .cg-slider-progress {
+    position: absolute;
+    top: 0;
+    left: 0;
     height: 100%;
     background: @main-color;
   }
@@ -71,18 +74,14 @@
       }
     }
   }
-}
 
-.user-select(@value) {
-  -webkit-user-select: @value;
-  -moz-user-select: @value;
-  -ms-user-select: @value;
-  user-select: @value;
-}
+  .cg-slider-handle-min {
+    display: none;
+  }
 
-.box-sizing (@value) {
-  box-sizing: @value;
-  -ms-box-sizing: @value;
-  -moz-box-sizing: @value;
-  -webkit-box-sizing: @value;
+  &.cg-slider-range {
+    .cg-slider-handle-min {
+      display: block;
+    }
+  }
 }

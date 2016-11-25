@@ -12,18 +12,21 @@ import helpFuncs from './helpFuncs';
  * @typedef {Object} SliderSettings
  * @property {Element|string} container - DOM Element or element id in which slider should be rendered.
  *                                        This property can be omitted. In this case new DOM element will be created and can be accessed via `sliderInstance.container`
+ * @property {number|number[]} initialValue - Value which will be set on initialization.
+ * @property {boolean} isRange - If true two sliders will be added to set range.
  * @property {number} min - Minimum slider value.
  * @property {number} max - Maximum slider value.
  * @property {number} step
  * @property {number|number[]} tabindex - tabindex of handle element. It can be array of two numbers for range slider.
  */
 
-var SLIDER_CLASS = 'cg-slider';
-var SLIDER_BG = `${SLIDER_CLASS}-bg`;
-var PROGRESS_CLASS = `${SLIDER_CLASS}-progress`;
-var HANDLE_CLASS = `${SLIDER_CLASS}-handle`;
-var MIN_HANDLE_CLASS = `${SLIDER_CLASS}-handle-min`;
-var MAX_HANDLE_CLASS = `${SLIDER_CLASS}-handle-max`;
+const SLIDER_CLASS = 'cg-slider';
+const RANGE_CLASS = `${SLIDER_CLASS}-range`;
+const SLIDER_BG = `${SLIDER_CLASS}-bg`;
+const PROGRESS_CLASS = `${SLIDER_CLASS}-progress`;
+const HANDLE_CLASS = `${SLIDER_CLASS}-handle`;
+const MIN_HANDLE_CLASS = `${SLIDER_CLASS}-handle-min`;
+const MAX_HANDLE_CLASS = `${SLIDER_CLASS}-handle-max`;
 
 class CgSlider extends EventEmitter {
 
@@ -35,6 +38,8 @@ class CgSlider extends EventEmitter {
   static get DEFAULT_SETTINGS() {
     if (!this._DEFAULT_SETTINGS) {
       this._DEFAULT_SETTINGS = {
+        initialValue: null,
+        isRange: false,
         min: 0,
         max: 100,
         step: 1,
@@ -56,7 +61,8 @@ class CgSlider extends EventEmitter {
   }
 
   static _fixSetting(name, setting) {
-    var constructor = this; // without this declaration IDE will highlight static variables as error
+    const constructor = this; // without this declaration IDE will highlight static variables as error
+
     switch (name) {
       case 'tabindex':
         if (typeof setting === 'number') {
@@ -86,20 +92,31 @@ class CgSlider extends EventEmitter {
    * @returns {SliderSettings}
    * @private
    */
-  static _normalizeSettings(settings) {
-    for (var name in settings) {
-      settings[name] = this._fixSetting(name, settings[name]);
+  static _fixSettings(settings) {
+    for (let name in settings) {
+      if (settings.hasOwnProperty(name)) {
+        settings[name] = this._fixSetting(name, settings[name]);
+      }
+    }
+
+    if (settings.initialValue === null) {
+      settings.initialValue = settings.isRange ? [settings.min, settings.min + settings.step] : settings.min;
     }
 
     return settings;
   }
 
+  /**
+   *
+   * @param {SliderSettings} settings
+   */
   constructor(settings) {
     super();
-    //console.log(this.keys());
+
     this._applySettings(settings);
     this._render();
     this._addListeners();
+    this._setValue(this.initialValue, true);
   }
 
   /**
@@ -108,6 +125,22 @@ class CgSlider extends EventEmitter {
    */
   get container() {
     return this._container;
+  }
+
+  /**
+   *
+   * @returns {boolean}
+   */
+  get isRange() {
+    return this._settings.isRange;
+  }
+
+  /**
+   *
+   * @param {boolean} val
+   */
+  set isRange(val) {
+    this.setSetting('isRange', val);
   }
 
   /**
@@ -123,8 +156,7 @@ class CgSlider extends EventEmitter {
    * @param {number} val
    */
   set min(val) {
-    this._settings.min = val;
-    //todo:
+    this.setSetting('min', val);
   }
 
   /**
@@ -140,8 +172,7 @@ class CgSlider extends EventEmitter {
    * @param {number} val
    */
   set max(val) {
-    this._settings.max = val;
-    //todo:
+    this.setSetting('max', val);
   }
 
   /**
@@ -157,8 +188,7 @@ class CgSlider extends EventEmitter {
    * @param {number} val
    */
   set step(val) {
-    this._settings.step = val;
-    //todo:
+    this.setSetting('step', val);
   }
 
   /**
@@ -184,10 +214,69 @@ class CgSlider extends EventEmitter {
     }
   }
 
+  /**
+   *
+   * @returns {number|number[]}
+   */
+  get value() {
+    return this.isRange ? this._value : this._value[1];
+  }
+
+  /**
+   *
+   * @param {number|number[]} val
+   */
+  set value(val) {
+    this._setValue(val);
+  }
+
+  /**
+   *
+   * @param {string} name
+   * @param {*} val
+   */
+  setSetting(name, val) {
+    val = this.constructor._fixSetting(name, val);
+
+    switch (name) {
+      case 'min':
+      case 'max':
+      case 'step':
+        //todo: redraw
+        this._settings[name] = val;
+        break;
+
+      case 'isRange':
+        //todo: if it different move to setter
+        this._settings.isRange = !!val;
+
+        break;
+
+      case 'tabindex':
+        this.tabindex = val;
+        break;
+
+      default:
+        throw new Error(`${this.constructor.name} setSetting error: passed setting '${name}' is not supported.`);
+    }
+  }
+
+  /**
+   * @private
+   */
   _addListeners() {
+    this._makeDraggable();
+    this._addKeyboardListeners();
+  }
+
+  _addKeyboardListeners() {
     //todo:
-    var self = this;
+  }
+
+  _makeDraggable() {
+    const self = this;
     this._minHandleElement.addEventListener('mousedown', onmousedown);
+    this._maxHandleElement.addEventListener('mousedown', onmousedown);
 
     var dragData = {
       startHandlePos: null,
@@ -200,6 +289,7 @@ class CgSlider extends EventEmitter {
       utils.extendEventObject(e);
 
       dragData.dragHandle = this;
+      dragData.isMaxHandle = utils.hasClass(this, MAX_HANDLE_CLASS);
       dragData.containerWidth = self._handlesContainer.getBoundingClientRect().width;
       dragData.startHandlePos = helpFuncs.getHandlePosition(this, self._handlesContainer);
       dragData.startMousePos = {
@@ -213,9 +303,12 @@ class CgSlider extends EventEmitter {
 
     function onmousemove(e) {
       utils.extendEventObject(e);
-      var percent = helpFuncs.getPercent(dragData.startHandlePos.x + e.px - dragData.startMousePos.x, dragData.containerWidth)
-      dragData.dragHandle.style.left = `${percent}%`;
-      self._progressElement.style.width = `${percent}%`;
+
+      const percent = helpFuncs.getPercent(dragData.startHandlePos.x + e.px - dragData.startMousePos.x, dragData.containerWidth);
+
+      var value = helpFuncs.calcValueByPercent(percent, self.min, self.max);
+
+      self.value = dragData.isMaxHandle ? value : [value, self.value[1]];
     }
 
     function onmouseup(e) {
@@ -224,7 +317,7 @@ class CgSlider extends EventEmitter {
       document.removeEventListener('mouseup', onmouseup);
 
       // clear dragData
-      for (var key in dragData) {
+      for (let key in dragData) {
         if (dragData.hasOwnProperty(key)) {
           dragData[key] = null;
         }
@@ -232,11 +325,16 @@ class CgSlider extends EventEmitter {
     }
   }
 
+  /**
+   * Fixes and sets settings on initialization.
+   * @param {SliderSettings} settings
+   * @private
+   */
   _applySettings(settings) {
     const DEFAULT_SETTINGS = this.constructor.DEFAULT_SETTINGS;
 
     settings = merge({}, DEFAULT_SETTINGS, settings);
-    this.constructor._normalizeSettings(settings);
+    this.constructor._fixSettings(settings);
 
     /** @type SliderSettings */
     this._settings = {};
@@ -261,20 +359,29 @@ class CgSlider extends EventEmitter {
     delete settings.container;
 
     // call setters for settings which defined in DEFAULT_SETTINGS only
-    for (var key in DEFAULT_SETTINGS) {
+    for (let key in DEFAULT_SETTINGS) {
       if (DEFAULT_SETTINGS.hasOwnProperty(key)) {
         this[key] = settings[key];
       }
     }
   }
 
+  /**
+   * @private
+   */
   _render() {
+    var rootClasses = [SLIDER_CLASS];
+
+    if (this.isRange) {
+      rootClasses.push(RANGE_CLASS);
+    }
+
     var elementHTML = `
-      <div class="${SLIDER_CLASS}">
+      <div class="${rootClasses.join(' ')}">
         <div class="${SLIDER_BG}">
           <div class="${PROGRESS_CLASS}"></div>
           <div class="${HANDLE_CLASS} ${MIN_HANDLE_CLASS}" tabindex="${this.tabindex[0]}"></div>
-          <div class="${HANDLE_CLASS} ${MAX_HANDLE_CLASS}" tabindex="${this.tabindex[1]}" style="display: none;"></div>
+          <div class="${HANDLE_CLASS} ${MAX_HANDLE_CLASS}" tabindex="${this.tabindex[1]}"></div>
         </div>
       </div>
     `;
@@ -288,9 +395,41 @@ class CgSlider extends EventEmitter {
     this.container.appendChild(this._rootElement);
 
     // todo: remove this code when interactive will be added
-    this._progressElement.style.width = '50%';
-    this._minHandleElement.style.left = '50%';
+    //this._progressElement.style.width = '50%';
+    //this._maxHandleElement.style.left = '50%';
 
+  }
+
+  _setValue(val, force) {
+    if (typeof val !== 'number' && !Array.isArray(val)) {
+      throw new Error(`${this.constructor.name} set value error: passed value's (${val}) type is not supported.`);
+    }
+
+    // for not range slider value can be number
+    if (typeof val === 'number') {
+      let minVal = this._value && this._value[0] || this.min;
+      val = [minVal, val];
+    }
+
+    val.sort((a, b) => a - b);
+    val = helpFuncs.fixValue(val, this.min, this.max, this.step);
+    //todo: get stepped value
+
+    var valueChanged = typeof this._value === 'undefined'
+                       || this._value[0] !== val[0]
+                       || this._value[1] !== val[1];
+
+    this._value = val;
+
+    if (valueChanged || force) {
+      const minPercentVal = helpFuncs.getPercent(val[0], this.max);
+      const maxPercentVal = helpFuncs.getPercent(val[1], this.max);
+      this._minHandleElement.style.left = `${minPercentVal}%`;
+      this._maxHandleElement.style.left = `${maxPercentVal}%`;
+      this._progressElement.style.left = `${minPercentVal}%`;
+      this._progressElement.style.width = `${maxPercentVal - minPercentVal}%`;
+      this.emit(this.constructor.EVENTS.CHANGE, this.value);
+    }
   }
 }
 

@@ -28,6 +28,7 @@
     "less": "^2.6.1",
     "less-loader": "^2.2.2",
     "path": "^0.12.7",
+    "postcss-loader": "^1.1.1",
     "style-loader": "^0.13.0",
     "uppercamelcase": "^1.1.0",
     "url-loader": "^0.5.7",

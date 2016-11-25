@@ -4,15 +4,37 @@
     <meta charset="UTF-8">
     <title>cg-slider examples</title>
     <script type="text/javascript" src="cg-slider.js"></script>
+    <style>
+        .cg-slider {
+            margin-top: 20px;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
 
 <div id="slider"></div>
+<div id="range-slider"></div>
+<div id="sliderValue"></div>
 
 <script type="text/javascript">
+    var valueElement = document.getElementById('sliderValue');
     var slider = new CgSlider({
-        container: 'slider'
+        container: 'slider',
+        initialValue: 50
     });
+    var rangeSlider = new CgSlider({
+        container: 'range-slider',
+        isRange: true,
+        initialValue: [25, 75]
+    });
+
+    slider.on(CgSlider.EVENTS.CHANGE, function (value) {
+        console.log('changed to:', value);
+        valueElement.innerHTML = value;
+    });
+
+
 </script>
 </body>
 </html>

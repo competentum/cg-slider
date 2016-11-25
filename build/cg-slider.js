@@ -103,6 +103,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @typedef {Object} SliderSettings
 	 * @property {Element|string} container - DOM Element or element id in which slider should be rendered.
 	 *                                        This property can be omitted. In this case new DOM element will be created and can be accessed via `sliderInstance.container`
+	 * @property {number|number[]} initialValue - Value which will be set on initialization.
+	 * @property {boolean} isRange - If true two sliders will be added to set range.
 	 * @property {number} min - Minimum slider value.
 	 * @property {number} max - Maximum slider value.
 	 * @property {number} step
@@ -110,6 +112,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 */
 
 	var SLIDER_CLASS = 'cg-slider';
+	var RANGE_CLASS = SLIDER_CLASS + '-range';
 	var SLIDER_BG = SLIDER_CLASS + '-bg';
 	var PROGRESS_CLASS = SLIDER_CLASS + '-progress';
 	var HANDLE_CLASS = SLIDER_CLASS + '-handle';
@@ -123,6 +126,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: '_fixSetting',
 	    value: function _fixSetting(name, setting) {
 	      var constructor = this; // without this declaration IDE will highlight static variables as error
+
 	      switch (name) {
 	        case 'tabindex':
 	          if (typeof setting === 'number') {
@@ -152,14 +156,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 
 	  }, {
-	    key: '_normalizeSettings',
-	    value: function _normalizeSettings(settings) {
+	    key: '_fixSettings',
+	    value: function _fixSettings(settings) {
 	      for (var name in settings) {
-	        settings[name] = this._fixSetting(name, settings[name]);
+	        if (settings.hasOwnProperty(name)) {
+	          settings[name] = this._fixSetting(name, settings[name]);
+	        }
+	      }
+
+	      if (settings.initialValue === null) {
+	        settings.initialValue = settings.isRange ? [settings.min, settings.min + settings.step] : settings.min;
 	      }
 
 	      return settings;
 	    }
+
+	    /**
+	     *
+	     * @param {SliderSettings} settings
+	     */
+
 	  }, {
 	    key: 'DEFAULT_SETTINGS',
 
@@ -172,6 +188,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	    get: function get() {
 	      if (!this._DEFAULT_SETTINGS) {
 	        this._DEFAULT_SETTINGS = {
+	          initialValue: null,
+	          isRange: false,
 	          min: 0,
 	          max: 100,
 	          step: 1,
@@ -197,12 +215,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  function CgSlider(settings) {
 	    _classCallCheck(this, CgSlider);
 
-	    //console.log(this.keys());
 	    var _this = _possibleConstructorReturn(this, (CgSlider.__proto__ || Object.getPrototypeOf(CgSlider)).call(this));
 
 	    _this._applySettings(settings);
 	    _this._render();
 	    _this._addListeners();
+	    _this._setValue(_this.initialValue, true);
 	    return _this;
 	  }
 
@@ -213,11 +231,61 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	  _createClass(CgSlider, [{
+	    key: 'setSetting',
+
+
+	    /**
+	     *
+	     * @param {string} name
+	     * @param {*} val
+	     */
+	    value: function setSetting(name, val) {
+	      val = this.constructor._fixSetting(name, val);
+
+	      switch (name) {
+	        case 'min':
+	        case 'max':
+	        case 'step':
+	          //todo: redraw
+	          this._settings[name] = val;
+	          break;
+
+	        case 'isRange':
+	          //todo: if it different move to setter
+	          this._settings.isRange = !!val;
+
+	          break;
+
+	        case 'tabindex':
+	          this.tabindex = val;
+	          break;
+
+	        default:
+	          throw new Error(this.constructor.name + ' setSetting error: passed setting \'' + name + '\' is not supported.');
+	      }
+	    }
+
+	    /**
+	     * @private
+	     */
+
+	  }, {
 	    key: '_addListeners',
 	    value: function _addListeners() {
+	      this._makeDraggable();
+	      this._addKeyboardListeners();
+	    }
+	  }, {
+	    key: '_addKeyboardListeners',
+	    value: function _addKeyboardListeners() {
 	      //todo:
+	    }
+	  }, {
+	    key: '_makeDraggable',
+	    value: function _makeDraggable() {
 	      var self = this;
 	      this._minHandleElement.addEventListener('mousedown', onmousedown);
+	      this._maxHandleElement.addEventListener('mousedown', onmousedown);
 
 	      var dragData = {
 	        startHandlePos: null,
@@ -230,6 +298,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _utils2.default.extendEventObject(e);
 
 	        dragData.dragHandle = this;
+	        dragData.isMaxHandle = _utils2.default.hasClass(this, MAX_HANDLE_CLASS);
 	        dragData.containerWidth = self._handlesContainer.getBoundingClientRect().width;
 	        dragData.startHandlePos = _helpFuncs2.default.getHandlePosition(this, self._handlesContainer);
 	        dragData.startMousePos = {
@@ -243,9 +312,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      function onmousemove(e) {
 	        _utils2.default.extendEventObject(e);
+
 	        var percent = _helpFuncs2.default.getPercent(dragData.startHandlePos.x + e.px - dragData.startMousePos.x, dragData.containerWidth);
-	        dragData.dragHandle.style.left = percent + '%';
-	        self._progressElement.style.width = percent + '%';
+
+	        var value = _helpFuncs2.default.calcValueByPercent(percent, self.min, self.max);
+
+	        self.value = dragData.isMaxHandle ? value : [value, self.value[1]];
 	      }
 
 	      function onmouseup(e) {
@@ -261,13 +333,20 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	      }
 	    }
+
+	    /**
+	     * Fixes and sets settings on initialization.
+	     * @param {SliderSettings} settings
+	     * @private
+	     */
+
 	  }, {
 	    key: '_applySettings',
 	    value: function _applySettings(settings) {
 	      var DEFAULT_SETTINGS = this.constructor.DEFAULT_SETTINGS;
 
 	      settings = (0, _merge2.default)({}, DEFAULT_SETTINGS, settings);
-	      this.constructor._normalizeSettings(settings);
+	      this.constructor._fixSettings(settings);
 
 	      /** @type SliderSettings */
 	      this._settings = {};
@@ -295,10 +374,21 @@ return /******/ (function(modules) { // webpackBootstrap
 	        }
 	      }
 	    }
+
+	    /**
+	     * @private
+	     */
+
 	  }, {
 	    key: '_render',
 	    value: function _render() {
-	      var elementHTML = '\n      <div class="' + SLIDER_CLASS + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MIN_HANDLE_CLASS + '" tabindex="' + this.tabindex[0] + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MAX_HANDLE_CLASS + '" tabindex="' + this.tabindex[1] + '" style="display: none;"></div>\n        </div>\n      </div>\n    ';
+	      var rootClasses = [SLIDER_CLASS];
+
+	      if (this.isRange) {
+	        rootClasses.push(RANGE_CLASS);
+	      }
+
+	      var elementHTML = '\n      <div class="' + rootClasses.join(' ') + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MIN_HANDLE_CLASS + '" tabindex="' + this.tabindex[0] + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MAX_HANDLE_CLASS + '" tabindex="' + this.tabindex[1] + '"></div>\n        </div>\n      </div>\n    ';
 
 	      this._rootElement = _utils2.default.createHTML(elementHTML);
 	      this._progressElement = this._rootElement.querySelector('.' + PROGRESS_CLASS);
@@ -309,13 +399,66 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this.container.appendChild(this._rootElement);
 
 	      // todo: remove this code when interactive will be added
-	      this._progressElement.style.width = '50%';
-	      this._minHandleElement.style.left = '50%';
+	      //this._progressElement.style.width = '50%';
+	      //this._maxHandleElement.style.left = '50%';
+	    }
+	  }, {
+	    key: '_setValue',
+	    value: function _setValue(val, force) {
+	      if (typeof val !== 'number' && !Array.isArray(val)) {
+	        throw new Error(this.constructor.name + ' set value error: passed value\'s (' + val + ') type is not supported.');
+	      }
+
+	      // for not range slider value can be number
+	      if (typeof val === 'number') {
+	        var minVal = this._value && this._value[0] || this.min;
+	        val = [minVal, val];
+	      }
+
+	      val.sort(function (a, b) {
+	        return a - b;
+	      });
+	      val = _helpFuncs2.default.fixValue(val, this.min, this.max, this.step);
+	      //todo: get stepped value
+
+	      var valueChanged = typeof this._value === 'undefined' || this._value[0] !== val[0] || this._value[1] !== val[1];
+
+	      this._value = val;
+
+	      if (valueChanged || force) {
+	        var minPercentVal = _helpFuncs2.default.getPercent(val[0], this.max);
+	        var maxPercentVal = _helpFuncs2.default.getPercent(val[1], this.max);
+	        this._minHandleElement.style.left = minPercentVal + '%';
+	        this._maxHandleElement.style.left = maxPercentVal + '%';
+	        this._progressElement.style.left = minPercentVal + '%';
+	        this._progressElement.style.width = maxPercentVal - minPercentVal + '%';
+	        this.emit(this.constructor.EVENTS.CHANGE, this.value);
+	      }
 	    }
 	  }, {
 	    key: 'container',
 	    get: function get() {
 	      return this._container;
+	    }
+
+	    /**
+	     *
+	     * @returns {boolean}
+	     */
+
+	  }, {
+	    key: 'isRange',
+	    get: function get() {
+	      return this._settings.isRange;
+	    }
+
+	    /**
+	     *
+	     * @param {boolean} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this.setSetting('isRange', val);
 	    }
 
 	    /**
@@ -335,8 +478,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    ,
 	    set: function set(val) {
-	      this._settings.min = val;
-	      //todo:
+	      this.setSetting('min', val);
 	    }
 
 	    /**
@@ -356,8 +498,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    ,
 	    set: function set(val) {
-	      this._settings.max = val;
-	      //todo:
+	      this.setSetting('max', val);
 	    }
 
 	    /**
@@ -377,8 +518,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    ,
 	    set: function set(val) {
-	      this._settings.step = val;
-	      //todo:
+	      this.setSetting('step', val);
 	    }
 
 	    /**
@@ -407,6 +547,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._maxHandleElement.setAttribute('tabindex', this._settings.tabindex[1]);
 	      }
 	    }
+
+	    /**
+	     *
+	     * @returns {number|number[]}
+	     */
+
+	  }, {
+	    key: 'value',
+	    get: function get() {
+	      return this.isRange ? this._value : this._value[1];
+	    }
+
+	    /**
+	     *
+	     * @param {number|number[]} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this._setValue(val);
+	    }
 	  }]);
 
 	  return CgSlider;
@@ -430,8 +590,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../node_modules/css-loader/index.js!./../node_modules/less-loader/index.js!./common.less", function() {
-				var newContent = require("!!./../node_modules/css-loader/index.js!./../node_modules/less-loader/index.js!./common.less");
+			module.hot.accept("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less", function() {
+				var newContent = require("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -449,7 +609,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	// module
-	exports.push([module.id, ".cg-slider {\n  padding: 6px;\n  position: relative;\n  -webkit-user-select: none;\n  -moz-user-select: none;\n  -ms-user-select: none;\n  user-select: none;\n}\n.cg-slider .cg-slider-bg {\n  height: 6px;\n  background: #aaaaaa;\n  position: relative;\n}\n.cg-slider .cg-slider-progress {\n  height: 100%;\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle {\n  top: 50%;\n  left: 0;\n  border-radius: 50%;\n  position: absolute;\n  height: 18px;\n  width: 18px;\n  background: #17AC5B;\n  cursor: pointer;\n  margin-left: -9px;\n  margin-top: -9px;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:after {\n  content: \"\";\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  top: 0;\n  border-radius: 50%;\n}\n.cg-slider .cg-slider-handle:after {\n  transition: left 0.3s, right 0.3s, bottom 0.3s, top 0.3s;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  left: -4px;\n  right: -4px;\n  bottom: -4px;\n  top: -4px;\n}\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle:focus {\n  outline: none;\n}\n.cg-slider .cg-slider-handle:focus:before {\n  background-color: rgba(23, 172, 91, 0.4);\n}\n", ""]);
+	exports.push([module.id, ".cg-slider {\n  padding: 6px;\n  position: relative;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n}\n.cg-slider .cg-slider-bg {\n  height: 6px;\n  background: #aaaaaa;\n  position: relative;\n}\n.cg-slider .cg-slider-progress {\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle {\n  top: 50%;\n  left: 0;\n  border-radius: 50%;\n  position: absolute;\n  height: 18px;\n  width: 18px;\n  background: #17AC5B;\n  cursor: pointer;\n  margin-left: -9px;\n  margin-top: -9px;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:after {\n  content: \"\";\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  top: 0;\n  border-radius: 50%;\n}\n.cg-slider .cg-slider-handle:after {\n  transition: left 0.3s, right 0.3s, bottom 0.3s, top 0.3s;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  left: -4px;\n  right: -4px;\n  bottom: -4px;\n  top: -4px;\n}\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle:focus {\n  outline: none;\n}\n.cg-slider .cg-slider-handle:focus:before {\n  background-color: rgba(23, 172, 91, 0.4);\n}\n.cg-slider .cg-slider-handle-min {\n  display: none;\n}\n.cg-slider.cg-slider-range .cg-slider-handle-min {\n  display: block;\n}\n", ""]);
 
 	// exports
 
@@ -1273,9 +1433,20 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	'use strict';
 
+	// Polyfills
+
 	Object.defineProperty(exports, "__esModule", {
 	  value: true
 	});
+	if (!Element.prototype.matches) {
+	  Element.prototype.matches = Element.prototype.matchesSelector || Element.prototype.mozMatchesSelector || Element.prototype.msMatchesSelector || Element.prototype.oMatchesSelector || Element.prototype.webkitMatchesSelector || function (s) {
+	    var matches = (this.document || this.ownerDocument).querySelectorAll(s),
+	        i = matches.length;
+	    while (--i >= 0 && matches.item(i) !== this) {}
+	    return i > -1;
+	  };
+	}
+
 	exports.default = {
 
 	  /**
@@ -1287,6 +1458,16 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
 	    if (re.test(element.className)) return;
 	    element.className = (element.className + " " + className).replace(/\s+/g, " ").replace(/(^ | $)/g, "");
+	  },
+
+	  /**
+	   *
+	   * @param {Element} element
+	   * @param {string} className
+	   * @returns {boolean}
+	   */
+	  hasClass: function hasClass(element, className) {
+	    return element.matches("." + className);
 	  },
 
 	  /**
@@ -1352,6 +1533,40 @@ return /******/ (function(modules) { // webpackBootstrap
 	  value: true
 	});
 	exports.default = {
+
+	  /**
+	   *
+	   * @param {number} percent
+	   * @param {number} min
+	   * @param {number} max
+	   * @returns {number}
+	   */
+	  calcValueByPercent: function calcValueByPercent(percent, min, max) {
+	    return min + (max - min) * percent / 100;
+	  },
+
+	  /**
+	   *
+	   * @param {number[]} value
+	   * @param {number} min
+	   * @param {number} max
+	   * @param {number} step
+	   * @returns {number[]}
+	   */
+	  fixValue: function fixValue(value, min, max, step) {
+	    for (var i = 0; i < value.length; i++) {
+	      var val = Math.max(min, Math.min(max, value[i]));
+	      //find nearest stepped value
+	      var steps = (val - min) / step;
+	      var leftSteppedVal = min + Math.floor(steps) * step;
+	      var rightSteppedVal = min + Math.ceil(steps) * step;
+	      var leftDiff = Math.abs(leftSteppedVal - val);
+	      var rightDiff = Math.abs(rightSteppedVal - val);
+
+	      value[i] = rightDiff < leftDiff ? rightSteppedVal : leftSteppedVal;
+	    }
+	    return value;
+	  },
 
 	  /**
 	   * Returns position of the handle's center in container.

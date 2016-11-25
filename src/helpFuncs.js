@@ -3,6 +3,40 @@
 export default {
 
   /**
+   *
+   * @param {number} percent
+   * @param {number} min
+   * @param {number} max
+   * @returns {number}
+   */
+  calcValueByPercent: function (percent, min, max) {
+    return min + (max - min) * percent / 100;
+  },
+
+  /**
+   *
+   * @param {number[]} value
+   * @param {number} min
+   * @param {number} max
+   * @param {number} step
+   * @returns {number[]}
+   */
+  fixValue: function (value, min, max, step) {
+    for (let i = 0; i < value.length; i++) {
+      let val = Math.max(min, Math.min(max, value[i]));
+      //find nearest stepped value
+      let steps = (val - min) / step;
+      let leftSteppedVal = min + Math.floor(steps) * step;
+      let rightSteppedVal = min + Math.ceil(steps) * step;
+      let leftDiff = Math.abs(leftSteppedVal - val);
+      let rightDiff = Math.abs(rightSteppedVal - val);
+
+      value[i] = rightDiff < leftDiff ? rightSteppedVal : leftSteppedVal;
+    }
+    return value;
+  },
+
+  /**
    * Returns position of the handle's center in container.
    * @param {Element} handleElement
    * @param {Element} container
