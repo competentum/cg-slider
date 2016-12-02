@@ -11,6 +11,16 @@ var webpackConfig = require('./webpack.config.js');
 var srcPath = path.resolve(__dirname, './src');
 var buildPath = path.resolve(__dirname, '.');
 
+gulp.task('lint', function() {
+    var eslint = require('gulp-eslint');
+
+    return gulp
+      .src(['src/*.js'])
+      .pipe(eslint())
+      .pipe(eslint.format())
+      .pipe(eslint.failAfterError());
+});
+
 gulp.task('webpack:build', function (callback) {
     var wpConfig = Object.create(webpackConfig);
 

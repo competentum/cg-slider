@@ -12,6 +12,7 @@ if (!Element.prototype.matches) {
       var matches = (this.document || this.ownerDocument).querySelectorAll(s),
           i       = matches.length;
       while (--i >= 0 && matches.item(i) !== this) {
+        // empty
       }
       return i > -1;
     };
@@ -25,9 +26,9 @@ export default {
    * @param {string} className
    */
   addClass: function addClass(element, className) {
-    var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
+    var re = new RegExp('(^|\\s)' + className + '(\\s|$)', 'g');
     if (re.test(element.className)) return;
-    element.className = (element.className + " " + className).replace(/\s+/g, " ").replace(/(^ | $)/g, "");
+    element.className = (element.className + ' ' + className).replace(/\s+/g, ' ').replace(/(^ | $)/g, '');
   },
 
   /**
@@ -46,8 +47,8 @@ export default {
    * @param {string} className
    */
   removeClass: function removeClass(element, className) {
-    var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
-    element.className = element.className.replace(re, "$1").replace(/\s+/g, " ").replace(/(^ | $)/g, "");
+    var re = new RegExp('(^|\\s)' + className + '(\\s|$)', 'g');
+    element.className = element.className.replace(re, '$1').replace(/\s+/g, ' ').replace(/(^ | $)/g, '');
   },
 
   /**
