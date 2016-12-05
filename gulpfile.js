@@ -69,7 +69,7 @@ gulp.task('webpack-dev-server', function () {
   var compiler = webpack(wpConfig);
 
   var server = new WebpackDevServer(compiler, {
-    contentBase: path.resolve(__dirname, './examples'),
+    contentBase: path.resolve(__dirname, './build'),
     hot: true,
     watchOptions: {
       aggregateTimeout: 300
