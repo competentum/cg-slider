@@ -32,6 +32,7 @@
     "eslint": "^3.11.1",
     "gulp": "^3.9.1",
     "gulp-eslint": "^3.0.1",
+    "gulp-jest": "^0.6.0",
     "gulp-util": "^3.0.7",
     "jest-cli": "^17.0.3",
     "less": "^2.6.1",
@@ -46,7 +47,6 @@
     "webpack-dev-server": "^1.14.1"
   },
   "dependencies": {
-    "dom-shims": "^0.1.4",
     "events": "^1.1.0",
     "keycode.js": "0.0.1",
     "merge": "^1.2.0"

@@ -1442,7 +1442,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  Element.prototype.matches = Element.prototype.matchesSelector || Element.prototype.mozMatchesSelector || Element.prototype.msMatchesSelector || Element.prototype.oMatchesSelector || Element.prototype.webkitMatchesSelector || function (s) {
 	    var matches = (this.document || this.ownerDocument).querySelectorAll(s),
 	        i = matches.length;
-	    while (--i >= 0 && matches.item(i) !== this) {}
+	    while (--i >= 0 && matches.item(i) !== this) {
+	      // empty
+	    }
 	    return i > -1;
 	  };
 	}
@@ -1455,9 +1457,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param {string} className
 	   */
 	  addClass: function addClass(element, className) {
-	    var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
+	    var re = new RegExp('(^|\\s)' + className + '(\\s|$)', 'g');
 	    if (re.test(element.className)) return;
-	    element.className = (element.className + " " + className).replace(/\s+/g, " ").replace(/(^ | $)/g, "");
+	    element.className = (element.className + ' ' + className).replace(/\s+/g, ' ').replace(/(^ | $)/g, '');
 	  },
 
 	  /**
@@ -1467,7 +1469,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @returns {boolean}
 	   */
 	  hasClass: function hasClass(element, className) {
-	    return element.matches("." + className);
+	    return element.matches('.' + className);
 	  },
 
 	  /**
@@ -1476,8 +1478,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param {string} className
 	   */
 	  removeClass: function removeClass(element, className) {
-	    var re = new RegExp("(^|\\s)" + className + "(\\s|$)", "g");
-	    element.className = element.className.replace(re, "$1").replace(/\s+/g, " ").replace(/(^ | $)/g, "");
+	    var re = new RegExp('(^|\\s)' + className + '(\\s|$)', 'g');
+	    element.className = element.className.replace(re, '$1').replace(/\s+/g, ' ').replace(/(^ | $)/g, '');
 	  },
 
 	  /**
@@ -1563,7 +1565,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var leftDiff = Math.abs(leftSteppedVal - val);
 	      var rightDiff = Math.abs(rightSteppedVal - val);
 
-	      value[i] = rightDiff < leftDiff ? rightSteppedVal : leftSteppedVal;
+	      value[i] = rightDiff <= leftDiff ? rightSteppedVal : leftSteppedVal;
 	    }
 	    return value;
 	  },
