@@ -5,6 +5,7 @@ var gutil = require("gulp-util");
 var path = require('path');
 
 var webpack = require("webpack");
+var webpackGulp = require('gulp-webpack');
 var WebpackDevServer = require("webpack-dev-server");
 var webpackConfig = require('./webpack.config.js');
 
@@ -28,19 +29,17 @@ gulp.task('test', function () {
     .pipe(jest());
 });
 
-gulp.task('webpack:build', function (callback) {
-  var wpConfig = Object.create(webpackConfig);
+gulp.task('webpack:build', function () {
+  return gulp.src('')
+    .pipe(webpackGulp(webpackConfig))
+    .pipe(gulp.dest('build'));
+});
 
-  // run webpack
-  webpack(wpConfig, function (err, stats) {
-    if (err) {
-      throw new gutil.PluginError('webpack:build', err);
-    }
-    gutil.log('[webpack:build]', stats.toString({
-      colors: true
-    }));
-    callback();
-  });
+//produces minified build
+gulp.task('webpack:dist', ['webpack:build'], function () {
+  return gulp.src('')
+    .pipe(webpackGulp(addMinification(webpackConfig)))
+    .pipe(gulp.dest('build'));
 });
 
 gulp.task('webpack-dev-server', function () {
@@ -88,3 +87,15 @@ gulp.task('webpack-dev-server', function () {
 gulp.task('watch', function () {
   gulp.watch([srcPath + '/**/*.js', srcPath + '/**/*.less'], ['webpack:build']);
 });
+
+/**
+ * Adds properties to config for minified version.
+ * @param {object} config
+ * @returns {object}
+ */
+function addMinification(config) {
+  config.plugins.push(new webpack.optimize.UglifyJsPlugin());
+  config.output.filename = config.output.filename.replace('.js', '.min.js');
+
+  return config;
+}
