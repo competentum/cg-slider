@@ -1,0 +1,22 @@
+{
+  "name": "cg-slider",
+  "description": "Accessible Slider Component",
+  "main": "build/cg-slider.min.js",
+  "authors": [
+    "Alexey Pilyugin"
+  ],
+  "license": "MIT",
+  "keywords": [
+    "slider",
+    "ADA"
+  ],
+  "homepage": "https://github.com/competentum/cg-slider",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "src"
+  ]
+}
