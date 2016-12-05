@@ -4,7 +4,7 @@ import './common.less';
 
 import EventEmitter from 'events';
 import merge from 'merge';
-import utils from './utils';
+import utils from 'cg-component-utils';
 import helpFuncs from './help-funcs';
 
 /**

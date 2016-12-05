@@ -82,11 +82,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _merge2 = _interopRequireDefault(_merge);
 
-	var _utils = __webpack_require__(9);
+	var _cgComponentUtils = __webpack_require__(9);
 
-	var _utils2 = _interopRequireDefault(_utils);
+	var _cgComponentUtils2 = _interopRequireDefault(_cgComponentUtils);
 
-	var _helpFuncs = __webpack_require__(10);
+	var _helpFuncs = __webpack_require__(11);
 
 	var _helpFuncs2 = _interopRequireDefault(_helpFuncs);
 
@@ -295,10 +295,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	      };
 
 	      function onmousedown(e) {
-	        _utils2.default.extendEventObject(e);
+	        _cgComponentUtils2.default.extendEventObject(e);
 
 	        dragData.dragHandle = this;
-	        dragData.isMaxHandle = _utils2.default.hasClass(this, MAX_HANDLE_CLASS);
+	        dragData.isMaxHandle = _cgComponentUtils2.default.hasClass(this, MAX_HANDLE_CLASS);
 	        dragData.containerWidth = self._handlesContainer.getBoundingClientRect().width;
 	        dragData.startHandlePos = _helpFuncs2.default.getHandlePosition(this, self._handlesContainer);
 	        dragData.startMousePos = {
@@ -311,7 +311,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      function onmousemove(e) {
-	        _utils2.default.extendEventObject(e);
+	        _cgComponentUtils2.default.extendEventObject(e);
 
 	        var percent = _helpFuncs2.default.getPercent(dragData.startHandlePos.x + e.px - dragData.startMousePos.x, dragData.containerWidth);
 
@@ -321,7 +321,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	      }
 
 	      function onmouseup(e) {
-	        _utils2.default.extendEventObject(e);
+	        _cgComponentUtils2.default.extendEventObject(e);
 	        document.removeEventListener('mousemove', onmousemove);
 	        document.removeEventListener('mouseup', onmouseup);
 
@@ -390,7 +390,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      var elementHTML = '\n      <div class="' + rootClasses.join(' ') + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MIN_HANDLE_CLASS + '" tabindex="' + this.tabindex[0] + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MAX_HANDLE_CLASS + '" tabindex="' + this.tabindex[1] + '"></div>\n        </div>\n      </div>\n    ';
 
-	      this._rootElement = _utils2.default.createHTML(elementHTML);
+	      this._rootElement = _cgComponentUtils2.default.createHTML(elementHTML);
 	      this._progressElement = this._rootElement.querySelector('.' + PROGRESS_CLASS);
 	      this._handlesContainer = this._rootElement.querySelector('.' + SLIDER_BG);
 	      this._minHandleElement = this._handlesContainer.querySelector('.' + MIN_HANDLE_CLASS);
@@ -1429,27 +1429,13 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 9 */
-/***/ function(module, exports) {
+/***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	// Polyfills
+	__webpack_require__(10);
 
-	Object.defineProperty(exports, "__esModule", {
-	  value: true
-	});
-	if (!Element.prototype.matches) {
-	  Element.prototype.matches = Element.prototype.matchesSelector || Element.prototype.mozMatchesSelector || Element.prototype.msMatchesSelector || Element.prototype.oMatchesSelector || Element.prototype.webkitMatchesSelector || function (s) {
-	    var matches = (this.document || this.ownerDocument).querySelectorAll(s),
-	        i = matches.length;
-	    while (--i >= 0 && matches.item(i) !== this) {
-	      // empty
-	    }
-	    return i > -1;
-	  };
-	}
-
-	exports.default = {
+	module.exports = {
 
 	  /**
 	   *
@@ -1468,7 +1454,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param {string} className
 	   * @returns {boolean}
 	   */
-	  hasClass: function hasClass(element, className) {
+	  hasClass: function (element, className) {
 	    return element.matches('.' + className);
 	  },
 
@@ -1487,7 +1473,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param {Node} node
 	   */
 	  removeNode: function removeNode(node) {
-	    if (node.parentNode) node.parentNode.removeChild(node);
+	    if (node.parentNode)
+	      node.parentNode.removeChild(node);
 	  },
 
 	  /**
@@ -1511,12 +1498,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	      event.cy = event.touches[0].clientY;
 	      event.px = event.touches[0].pageX;
 	      event.py = event.touches[0].pageY;
-	    } else if (event.changedTouches && event.changedTouches[0]) {
+	    }
+	    else if (event.changedTouches && event.changedTouches[0]) {
 	      event.cx = event.changedTouches[0].clientX;
 	      event.cy = event.changedTouches[0].clientY;
 	      event.px = event.changedTouches[0].pageX;
 	      event.py = event.changedTouches[0].pageY;
-	    } else {
+	    }
+	    else {
 	      event.cx = event.clientX;
 	      event.cy = event.clientY;
 	      event.px = event.pageX;
@@ -1527,6 +1516,29 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 10 */
+/***/ function(module, exports) {
+
+	'use strict';
+
+	if (!Element.prototype.matches) {
+	  Element.prototype.matches =
+	    Element.prototype.matchesSelector ||
+	    Element.prototype.mozMatchesSelector ||
+	    Element.prototype.msMatchesSelector ||
+	    Element.prototype.oMatchesSelector ||
+	    Element.prototype.webkitMatchesSelector ||
+	    function (s) {
+	      var matches = (this.document || this.ownerDocument).querySelectorAll(s),
+	          i       = matches.length;
+	      while (--i >= 0 && matches.item(i) !== this) {
+	        // empty
+	      }
+	      return i > -1;
+	    };
+	}
+
+/***/ },
+/* 11 */
 /***/ function(module, exports) {
 
 	'use strict';
