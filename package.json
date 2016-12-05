@@ -2,7 +2,7 @@
   "name": "cg-slider",
   "version": "0.0.1",
   "description": "Accessible Slider Component",
-  "main": "src/index.js",
+  "main": "build/cg-slider.min.js",
   "pre-commit": [
     "test",
     "lint"
