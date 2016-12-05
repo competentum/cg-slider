@@ -81,4 +81,4 @@ slider.on(CgSlider.EVENTS.CHANGE, function (value) {
 
 
 [npm-url]: https://www.npmjs.com/package/cg-slider
-[npm-image]: https://img.shields.io/npm/v/cg-slider.svg
+[npm-image]: https://img.shields.io/npm/v/cg-slider.svg?style=flat-square
