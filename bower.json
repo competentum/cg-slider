@@ -12,11 +12,7 @@
   ],
   "homepage": "https://github.com/competentum/cg-slider",
   "ignore": [
-    "**/.*",
-    "node_modules",
-    "bower_components",
-    "test",
-    "tests",
-    "src"
+    "**/*.*",
+    "!biuld"
   ]
 }
