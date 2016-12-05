@@ -12,7 +12,13 @@
   ],
   "homepage": "https://github.com/competentum/cg-slider",
   "ignore": [
-    "**/*.*",
-    "!biuld"
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests",
+    "src",
+    "gulpfile.js",
+    "webpack.config.js"
   ]
 }
