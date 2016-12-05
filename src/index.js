@@ -5,7 +5,7 @@ import './common.less';
 import EventEmitter from 'events';
 import merge from 'merge';
 import utils from './utils';
-import helpFuncs from './helpFuncs';
+import helpFuncs from './help-funcs';
 
 /**
  * Slider's customizing settings

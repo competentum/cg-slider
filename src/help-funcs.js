@@ -31,7 +31,7 @@ export default {
       let leftDiff = Math.abs(leftSteppedVal - val);
       let rightDiff = Math.abs(rightSteppedVal - val);
 
-      value[i] = rightDiff < leftDiff ? rightSteppedVal : leftSteppedVal;
+      value[i] = rightDiff <= leftDiff ? rightSteppedVal : leftSteppedVal;
     }
     return value;
   },
