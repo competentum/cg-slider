@@ -21,9 +21,27 @@ describe('Help functions:', function () {
     it('should fix values according step', function () {
       expect(helpFuncs.fixValue([1.5, 11.3], 0, 100, 1)).toEqual([2, 11]);
     });
+
+    it('should return value with allowed max', function () {
+      expect(helpFuncs.fixValue([0, 0], 0, 100, 1, false, false)).toEqual([0, 1]);
+    });
+
+    it('should return value with allowed min', function () {
+      expect(helpFuncs.fixValue([100, 100], 0, 100, 1, false, true)).toEqual([99, 100]);
+    });
   });
 
-  describe('getPercent', function() {
+  describe('getSteppedNumber', function () {
+    it('should fix not stepped number', function () {
+      expect(helpFuncs.getSteppedNumber(1.5, 0, 1)).toBe(2);
+    });
+
+    it('should fix not stepped float number', function () {
+      expect(helpFuncs.getSteppedNumber(11.312, 0, .01)).toBe(11.31);
+    });
+  });
+
+  describe('getPercent', function () {
     it('should calculate right value', function () {
       expect(helpFuncs.getPercent(15, 20)).toEqual(75);
     });

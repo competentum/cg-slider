@@ -1,5 +1,5 @@
 /*!
- * cg-slider v0.0.1 - Accessible Slider Component
+ * cg-slider v0.0.4 - Accessible Slider Component
  * 
  * (c) 2015-2016 Competentum Group | http://competentum.com
  * Released under the MIT license
@@ -78,15 +78,19 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	var _events2 = _interopRequireDefault(_events);
 
-	var _merge = __webpack_require__(7);
+	var _keycode = __webpack_require__(7);
+
+	var _keycode2 = _interopRequireDefault(_keycode);
+
+	var _merge = __webpack_require__(8);
 
 	var _merge2 = _interopRequireDefault(_merge);
 
-	var _cgComponentUtils = __webpack_require__(9);
+	var _cgComponentUtils = __webpack_require__(10);
 
 	var _cgComponentUtils2 = _interopRequireDefault(_cgComponentUtils);
 
-	var _helpFuncs = __webpack_require__(11);
+	var _helpFuncs = __webpack_require__(12);
 
 	var _helpFuncs2 = _interopRequireDefault(_helpFuncs);
 
@@ -286,6 +290,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var self = this;
 	      this._minHandleElement.addEventListener('mousedown', onmousedown);
 	      this._maxHandleElement.addEventListener('mousedown', onmousedown);
+	      this._minHandleElement.addEventListener('keydown', onkeydown);
+	      this._maxHandleElement.addEventListener('keydown', onkeydown);
 
 	      var dragData = {
 	        startHandlePos: null,
@@ -294,6 +300,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        containerWidth: null
 	      };
 
+	      //todo: move handlers to prototype
 	      function onmousedown(e) {
 	        _cgComponentUtils2.default.extendEventObject(e);
 
@@ -317,7 +324,11 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	        var value = _helpFuncs2.default.calcValueByPercent(percent, self.min, self.max);
 
-	        self.value = dragData.isMaxHandle ? value : [value, self.value[1]];
+	        value = dragData.isMaxHandle ? value : [value, self.value[1]];
+	        self._setValue(value);
+	        //todo: emit start change event
+
+	        e.preventDefault();
 	      }
 
 	      function onmouseup(e) {
@@ -331,6 +342,45 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dragData[key] = null;
 	          }
 	        }
+	        //todo: emit stop change event
+
+	        e.preventDefault();
+	      }
+
+	      function onkeydown(e) {
+	        var isMaxHandle = _cgComponentUtils2.default.hasClass(this, MAX_HANDLE_CLASS);
+	        var newVal;
+
+	        switch ((0, _keycode2.default)(e)) {
+	          case 'home':
+	          case 'page down':
+	            newVal = isMaxHandle ? self.min : [self.min, self._value[1]];
+	            break;
+
+	          case 'end':
+	          case 'page up':
+	            newVal = isMaxHandle ? self.max : [self.max, self._value[1]];
+	            break;
+
+	          case 'up':
+	          case 'right':
+	            newVal = isMaxHandle ? self._value[1] + self.step : [self._value[0] + self.step, self._value[1]];
+	            break;
+
+	          case 'down':
+	          case 'left':
+	            newVal = isMaxHandle ? self._value[1] - self.step : [self._value[0] - self.step, self._value[1]];
+	            break;
+	        }
+	        if (typeof newVal === 'undefined' || isNaN(newVal) && (isNaN(newVal[0]) || isNaN(newVal[1]))) {
+	          return;
+	        }
+
+	        //todo: emit start and stop change events
+	        self._setValue(newVal);
+
+	        e.preventDefault();
+	        e.stopPropagation();
 	      }
 	    }
 
@@ -415,11 +465,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	        val = [minVal, val];
 	      }
 
-	      val.sort(function (a, b) {
-	        return a - b;
-	      });
-	      val = _helpFuncs2.default.fixValue(val, this.min, this.max, this.step);
-	      //todo: get stepped value
+	      var isMaxChanged;
+
+	      if (typeof this._value !== 'undefined') {
+	        isMaxChanged = this._value[1] !== val[1];
+	      }
+
+	      val = _helpFuncs2.default.fixValue(val, this.min, this.max, this.step, !this.isRange, isMaxChanged);
 
 	      var valueChanged = typeof this._value === 'undefined' || this._value[0] !== val[0] || this._value[1] !== val[1];
 
@@ -565,6 +617,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    ,
 	    set: function set(val) {
+	      if (Array.isArray(val)) {
+	        val.sort(function (a, b) {
+	          return a - b;
+	        });
+	      }
 	      this._setValue(val);
 	    }
 	  }]);
@@ -1232,6 +1289,158 @@ return /******/ (function(modules) { // webpackBootstrap
 
 /***/ },
 /* 7 */
+/***/ function(module, exports) {
+
+	// Source: http://jsfiddle.net/vWx8V/
+	// http://stackoverflow.com/questions/5603195/full-list-of-javascript-keycodes
+
+	/**
+	 * Conenience method returns corresponding value for given keyName or keyCode.
+	 *
+	 * @param {Mixed} keyCode {Number} or keyName {String}
+	 * @return {Mixed}
+	 * @api public
+	 */
+
+	exports = module.exports = function(searchInput) {
+	  // Keyboard Events
+	  if (searchInput && 'object' === typeof searchInput) {
+	    var hasKeyCode = searchInput.which || searchInput.keyCode || searchInput.charCode
+	    if (hasKeyCode) searchInput = hasKeyCode
+	  }
+
+	  // Numbers
+	  if ('number' === typeof searchInput) return names[searchInput]
+
+	  // Everything else (cast to string)
+	  var search = String(searchInput)
+
+	  // check codes
+	  var foundNamedKey = codes[search.toLowerCase()]
+	  if (foundNamedKey) return foundNamedKey
+
+	  // check aliases
+	  var foundNamedKey = aliases[search.toLowerCase()]
+	  if (foundNamedKey) return foundNamedKey
+
+	  // weird character?
+	  if (search.length === 1) return search.charCodeAt(0)
+
+	  return undefined
+	}
+
+	/**
+	 * Get by name
+	 *
+	 *   exports.code['enter'] // => 13
+	 */
+
+	var codes = exports.code = exports.codes = {
+	  'backspace': 8,
+	  'tab': 9,
+	  'enter': 13,
+	  'shift': 16,
+	  'ctrl': 17,
+	  'alt': 18,
+	  'pause/break': 19,
+	  'caps lock': 20,
+	  'esc': 27,
+	  'space': 32,
+	  'page up': 33,
+	  'page down': 34,
+	  'end': 35,
+	  'home': 36,
+	  'left': 37,
+	  'up': 38,
+	  'right': 39,
+	  'down': 40,
+	  'insert': 45,
+	  'delete': 46,
+	  'command': 91,
+	  'left command': 91,
+	  'right command': 93,
+	  'numpad *': 106,
+	  'numpad +': 107,
+	  'numpad -': 109,
+	  'numpad .': 110,
+	  'numpad /': 111,
+	  'num lock': 144,
+	  'scroll lock': 145,
+	  'my computer': 182,
+	  'my calculator': 183,
+	  ';': 186,
+	  '=': 187,
+	  ',': 188,
+	  '-': 189,
+	  '.': 190,
+	  '/': 191,
+	  '`': 192,
+	  '[': 219,
+	  '\\': 220,
+	  ']': 221,
+	  "'": 222
+	}
+
+	// Helper aliases
+
+	var aliases = exports.aliases = {
+	  'windows': 91,
+	  '⇧': 16,
+	  '⌥': 18,
+	  '⌃': 17,
+	  '⌘': 91,
+	  'ctl': 17,
+	  'control': 17,
+	  'option': 18,
+	  'pause': 19,
+	  'break': 19,
+	  'caps': 20,
+	  'return': 13,
+	  'escape': 27,
+	  'spc': 32,
+	  'pgup': 33,
+	  'pgdn': 34,
+	  'ins': 45,
+	  'del': 46,
+	  'cmd': 91
+	}
+
+
+	/*!
+	 * Programatically add the following
+	 */
+
+	// lower case chars
+	for (i = 97; i < 123; i++) codes[String.fromCharCode(i)] = i - 32
+
+	// numbers
+	for (var i = 48; i < 58; i++) codes[i - 48] = i
+
+	// function keys
+	for (i = 1; i < 13; i++) codes['f'+i] = i + 111
+
+	// numpad keys
+	for (i = 0; i < 10; i++) codes['numpad '+i] = i + 96
+
+	/**
+	 * Get by code
+	 *
+	 *   exports.name[13] // => 'Enter'
+	 */
+
+	var names = exports.names = exports.title = {} // title for backward compat
+
+	// Create reverse mapping
+	for (i in codes) names[codes[i]] = i
+
+	// Add aliases
+	for (var alias in aliases) {
+	  codes[alias] = aliases[alias]
+	}
+
+
+/***/ },
+/* 8 */
 /***/ function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(module) {/*!
@@ -1409,10 +1618,10 @@ return /******/ (function(modules) { // webpackBootstrap
 		}
 
 	})(typeof module === 'object' && module && typeof module.exports === 'object' && module.exports);
-	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(8)(module)))
+	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9)(module)))
 
 /***/ },
-/* 8 */
+/* 9 */
 /***/ function(module, exports) {
 
 	module.exports = function(module) {
@@ -1428,12 +1637,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 /***/ },
-/* 9 */
+/* 10 */
 /***/ function(module, exports, __webpack_require__) {
 
 	'use strict';
 
-	__webpack_require__(10);
+	__webpack_require__(11);
 
 	module.exports = {
 
@@ -1515,7 +1724,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 /***/ },
-/* 10 */
+/* 11 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -1538,7 +1747,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 /***/ },
-/* 11 */
+/* 12 */
 /***/ function(module, exports) {
 
 	'use strict';
@@ -1561,25 +1770,58 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  /**
 	   *
-	   * @param {number[]} value
-	   * @param {number} min
-	   * @param {number} max
-	   * @param {number} step
+	   * @param {number[]} value - array of two numbers which represent min and max values of slider.
+	   * @param {number} min - the minimum allowed value.
+	   * @param {number} max - the maximum allowed value.
+	   * @param {number} step - step between allowed numbers.
+	   * @param {boolean} [allowSameValue = true] - allow min and max values be the same. It is `false` for range slider.
+	   * @param {boolean} [minIsForeground = true] - min value (value[0]) is foreground.
+	   *                                            It is mean that if this argument is `true` and max value (value[1]) is less than min value,
+	   *                                            max value will be recalculated to be the same or greater than min value.
+	   *                                            If it is `false` min value will be recalculated regarding the max value.
 	   * @returns {number[]}
 	   */
 	  fixValue: function fixValue(value, min, max, step) {
-	    for (var i = 0; i < value.length; i++) {
-	      var val = Math.max(min, Math.min(max, value[i]));
-	      //find nearest stepped value
-	      var steps = (val - min) / step;
-	      var leftSteppedVal = min + Math.floor(steps) * step;
-	      var rightSteppedVal = min + Math.ceil(steps) * step;
-	      var leftDiff = Math.abs(leftSteppedVal - val);
-	      var rightDiff = Math.abs(rightSteppedVal - val);
+	    var allowSameValue = arguments.length > 4 && arguments[4] !== undefined ? arguments[4] : true;
+	    var minIsForeground = arguments.length > 5 && arguments[5] !== undefined ? arguments[5] : true;
 
-	      value[i] = rightDiff <= leftDiff ? rightSteppedVal : leftSteppedVal;
+	    for (var i = 0; i < value.length; i++) {
+
+	      var minAllowed = !allowSameValue && i == 1 ? min + step : min;
+	      var maxAllowed = !allowSameValue && i == 0 ? max - step : max;
+	      var val = Math.max(minAllowed, Math.min(maxAllowed, value[i]));
+	      //find nearest stepped value
+	      value[i] = this.getSteppedNumber(val, min, step);
 	    }
+
+	    if (minIsForeground) {
+	      // max range value can not be less than min range value
+	      var minVal = allowSameValue ? value[0] : value[0] + step;
+	      value[1] = Math.max(minVal, value[1]);
+	    } else {
+	      // min range value can not be greater than max range value
+	      var maxVal = allowSameValue ? value[1] : value[1] - step;
+	      value[0] = Math.min(value[0], maxVal);
+	    }
+
 	    return value;
+	  },
+
+	  /**
+	   * Returns stepped number.
+	   * @param {number} num
+	   * @param {number} min
+	   * @param {number} step
+	   * @returns {number}
+	   */
+	  getSteppedNumber: function getSteppedNumber(num, min, step) {
+	    var steps = (num - min) / step;
+	    var leftSteppedVal = min + Math.floor(steps) * step;
+	    var rightSteppedVal = min + Math.ceil(steps) * step;
+	    var leftDiff = Math.abs(leftSteppedVal - num);
+	    var rightDiff = Math.abs(rightSteppedVal - num);
+
+	    return rightDiff <= leftDiff ? rightSteppedVal : leftSteppedVal;
 	  },
 
 	  /**

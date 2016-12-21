@@ -3,6 +3,7 @@
 import './common.less';
 
 import EventEmitter from 'events';
+import keycode from 'keycode';
 import merge from 'merge';
 import utils from 'cg-component-utils';
 import helpFuncs from './help-funcs';
@@ -227,6 +228,9 @@ class CgSlider extends EventEmitter {
    * @param {number|number[]} val
    */
   set value(val) {
+    if (Array.isArray(val)) {
+      val.sort((a, b) => a - b);
+    }
     this._setValue(val);
   }
 
@@ -277,6 +281,8 @@ class CgSlider extends EventEmitter {
     const self = this;
     this._minHandleElement.addEventListener('mousedown', onmousedown);
     this._maxHandleElement.addEventListener('mousedown', onmousedown);
+    this._minHandleElement.addEventListener('keydown', onkeydown);
+    this._maxHandleElement.addEventListener('keydown', onkeydown);
 
     var dragData = {
       startHandlePos: null,
@@ -285,6 +291,7 @@ class CgSlider extends EventEmitter {
       containerWidth: null
     };
 
+    //todo: move handlers to prototype
     function onmousedown(e) {
       utils.extendEventObject(e);
 
@@ -308,7 +315,11 @@ class CgSlider extends EventEmitter {
 
       var value = helpFuncs.calcValueByPercent(percent, self.min, self.max);
 
-      self.value = dragData.isMaxHandle ? value : [value, self.value[1]];
+      value = dragData.isMaxHandle ? value : [value, self.value[1]];
+      self._setValue(value);
+      //todo: emit start change event
+
+      e.preventDefault();
     }
 
     function onmouseup(e) {
@@ -322,6 +333,47 @@ class CgSlider extends EventEmitter {
           dragData[key] = null;
         }
       }
+      //todo: emit stop change event
+
+      e.preventDefault();
+    }
+
+    function onkeydown(e) {
+      const isMaxHandle = utils.hasClass(this, MAX_HANDLE_CLASS);
+      var newVal;
+
+      switch (keycode(e)) {
+        case 'home':
+        case 'page down':
+          newVal = isMaxHandle ? self.min : [self.min, self._value[1]];
+          break;
+
+        case 'end':
+        case 'page up':
+          newVal = isMaxHandle ? self.max : [self.max, self._value[1]];
+          break;
+
+        case 'up':
+        case 'right':
+          newVal = isMaxHandle ? self._value[1] + self.step : [self._value[0] + self.step, self._value[1]];
+          break;
+
+        case 'down':
+        case 'left':
+          newVal = isMaxHandle ? self._value[1] - self.step : [self._value[0] - self.step, self._value[1]];
+          break;
+      }
+      if (typeof newVal === 'undefined'
+          || isNaN(newVal)
+             && (isNaN(newVal[0]) || isNaN(newVal[1]))) {
+        return;
+      }
+
+      //todo: emit start and stop change events
+      self._setValue(newVal);
+
+      e.preventDefault();
+      e.stopPropagation();
     }
   }
 
@@ -411,9 +463,13 @@ class CgSlider extends EventEmitter {
       val = [minVal, val];
     }
 
-    val.sort((a, b) => a - b);
-    val = helpFuncs.fixValue(val, this.min, this.max, this.step);
-    //todo: get stepped value
+    var isMaxChanged;
+
+    if (typeof this._value !== 'undefined') {
+      isMaxChanged = this._value[1] !== val[1];
+    }
+
+    val = helpFuncs.fixValue(val, this.min, this.max, this.step, !this.isRange, isMaxChanged);
 
     var valueChanged = typeof this._value === 'undefined'
                        || this._value[0] !== val[0]
