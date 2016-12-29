@@ -128,6 +128,12 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  _createClass(CgSlider, null, [{
 	    key: '_fixSetting',
+
+
+	    /**
+	     * Default instance settings.
+	     * @type SliderSettings
+	     */
 	    value: function _fixSetting(name, setting) {
 	      var constructor = this; // without this declaration IDE will highlight static variables as error
 
@@ -159,6 +165,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @private
 	     */
 
+
+	    /**
+	     * Events which can be emitted.
+	     * @type {{CHANGE: string, START_CHANGE: string, STOP_CHANGE: string}}
+	     */
+
 	  }, {
 	    key: '_fixSettings',
 	    value: function _fixSettings(settings) {
@@ -180,40 +192,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	     * @param {SliderSettings} settings
 	     */
 
-	  }, {
-	    key: 'DEFAULT_SETTINGS',
-
-
-	    /**
-	     *
-	     * @returns {SliderSettings}
-	     * @constructor
-	     */
-	    get: function get() {
-	      if (!this._DEFAULT_SETTINGS) {
-	        this._DEFAULT_SETTINGS = {
-	          initialValue: null,
-	          isRange: false,
-	          min: 0,
-	          max: 100,
-	          step: 1,
-	          tabindex: [0, 0]
-	        };
-	      }
-	      return this._DEFAULT_SETTINGS;
-	    }
-	  }, {
-	    key: 'EVENTS',
-	    get: function get() {
-	      if (!this._EVENTS) {
-	        this._EVENTS = {
-	          CHANGE: 'change',
-	          START_CHANGE: 'start_change',
-	          STOP_CHANGE: 'stop_change'
-	        };
-	      }
-	      return this._EVENTS;
-	    }
 	  }]);
 
 	  function CgSlider(settings) {
@@ -628,6 +606,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	  return CgSlider;
 	}(_events2.default);
+
+	CgSlider.DEFAULT_SETTINGS = {
+	  initialValue: null,
+	  isRange: false,
+	  min: 0,
+	  max: 100,
+	  step: 1,
+	  tabindex: [0, 0]
+	};
+	CgSlider.EVENTS = {
+	  CHANGE: 'change',
+	  START_CHANGE: 'start_change',
+	  STOP_CHANGE: 'stop_change'
+	};
+
 
 	module.exports = CgSlider;
 

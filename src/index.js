@@ -32,34 +32,27 @@ const MAX_HANDLE_CLASS = `${SLIDER_CLASS}-handle-max`;
 class CgSlider extends EventEmitter {
 
   /**
-   *
-   * @returns {SliderSettings}
-   * @constructor
+   * Default instance settings.
+   * @type SliderSettings
    */
-  static get DEFAULT_SETTINGS() {
-    if (!this._DEFAULT_SETTINGS) {
-      this._DEFAULT_SETTINGS = {
-        initialValue: null,
-        isRange: false,
-        min: 0,
-        max: 100,
-        step: 1,
-        tabindex: [0, 0]
-      };
-    }
-    return this._DEFAULT_SETTINGS;
-  }
+  static DEFAULT_SETTINGS = {
+    initialValue: null,
+    isRange: false,
+    min: 0,
+    max: 100,
+    step: 1,
+    tabindex: [0, 0]
+  };
 
-  static get EVENTS() {
-    if (!this._EVENTS) {
-      this._EVENTS = {
-        CHANGE: 'change',
-        START_CHANGE: 'start_change',
-        STOP_CHANGE: 'stop_change'
-      };
-    }
-    return this._EVENTS;
-  }
+  /**
+   * Events which can be emitted.
+   * @type {{CHANGE: string, START_CHANGE: string, STOP_CHANGE: string}}
+   */
+  static EVENTS = {
+    CHANGE: 'change',
+    START_CHANGE: 'start_change',
+    STOP_CHANGE: 'stop_change'
+  };
 
   static _fixSetting(name, setting) {
     const constructor = this; // without this declaration IDE will highlight static variables as error
