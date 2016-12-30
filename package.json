@@ -2,16 +2,14 @@
   "name": "cg-slider",
   "version": "0.0.5",
   "description": "Accessible Slider Component",
-  "main": "lib/index.js",
+  "main": "build/cg-slider.min.js",
   "pre-commit": [
     "test",
     "lint"
   ],
   "scripts": {
     "build": "webpack",
-    "compile": "babel -d lib/ src/ --copy-files --ignore spec.js,test.js",
     "lint": "gulp lint",
-    "prepublish": "npm run compile",
     "test": "jest"
   },
   "repository": {
@@ -25,7 +23,6 @@
   "author": "Alexey Pilyugin",
   "license": "MIT",
   "devDependencies": {
-    "babel-cli": "^6.18.0",
     "babel-core": "^6.18.0",
     "babel-eslint": "^7.1.1",
     "babel-jest": "^17.0.2",
