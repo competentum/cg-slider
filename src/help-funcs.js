@@ -5,11 +5,11 @@ export default {
   /**
    *
    * @param {number} percent
-   * @param {number} min
    * @param {number} max
+   * @param {number} [min = 0]
    * @returns {number}
    */
-  calcValueByPercent: function (percent, min, max) {
+  calcValueByPercent: function (percent, max, min = 0) {
     return min + (max - min) * percent / 100;
   },
 
@@ -74,10 +74,8 @@ export default {
    * @returns {{x: number, y: number}}
    */
   getHandlePosition: function getHandlePosition(handleElement, container) {
-    container = container || handleElement.parentElement;
-
-    var bounds = handleElement.getBoundingClientRect();
-    var containerBounds = container.getBoundingClientRect();
+    const bounds = handleElement.getBoundingClientRect();
+    const containerBounds = container.getBoundingClientRect();
 
     return {
       x: (bounds.left + bounds.right) / 2 - containerBounds.left,
@@ -85,7 +83,29 @@ export default {
     };
   },
 
-  getPercent: function (val, max) {
-    return Math.min(100, Math.max(0, 100 * val / max));
+  /**
+   *
+   * @param {number} val
+   * @param {number} max
+   * @param {number} [min = 0]
+   * @returns {number}
+   */
+  getPercent: function getPercent(val, max, min = 0) {
+    return Math.min(100, Math.max(0, 100 * (val - min) / (max - min)));
+  },
+
+  /**
+   * Sets attribute with `attrName` to passed element if `attrVal` is not empty otherwise remove this attribute.
+   * @param {Element} element
+   * @param {string} attrName
+   * @param {string} [attrVal]
+   */
+  setAttributeOrRemoveIfEmpty: function (element, attrName, attrVal = '') {
+    if (attrVal) {
+      element.setAttribute(attrName, attrVal);
+    }
+    else {
+      element.removeAttribute(attrName);
+    }
   }
 };

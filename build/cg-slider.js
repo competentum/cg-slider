@@ -1,7 +1,7 @@
 /*!
- * cg-slider v0.0.4 - Accessible Slider Component
+ * cg-slider v0.0.6 - Accessible Slider Component
  * 
- * (c) 2015-2016 Competentum Group | http://competentum.com
+ * (c) 2015-2017 Competentum Group | http://competentum.com
  * Released under the MIT license
  * https://opensource.org/licenses/mit-license.php
  */
@@ -113,6 +113,14 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {number} max - Maximum slider value.
 	 * @property {number} step
 	 * @property {number|number[]} tabindex - tabindex of handle element. It can be array of two numbers for range slider.
+	 * @property {string|string[]} ariaLabel - string that labels the current slider for screen readers. It can be array of two strings for range slider.
+	 *                                         For more info see [WAI-ARIA specification/#aria-label]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-label}.
+	 * @property {string|string[]} ariaLabelledBy - id of the element that labels the current slider. It can be array of two strings for range slider.
+	 *                                             This property has higher priority than `ariaLabel`.
+	 *                                             For more info see [WAI-ARIA specification/#aria-labelledby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-labelledby}.
+	 * @property {string|string[]} ariaDescribedBy - id of the element that describes the current slider. It can be array of two strings for range slider.
+	 *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
+	 *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
 	 */
 
 	var SLIDER_CLASS = 'cg-slider';
@@ -122,6 +130,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var HANDLE_CLASS = SLIDER_CLASS + '-handle';
 	var MIN_HANDLE_CLASS = SLIDER_CLASS + '-handle-min';
 	var MAX_HANDLE_CLASS = SLIDER_CLASS + '-handle-max';
+
+	var LARGE_CHANGE_MULTIPLIER = 10;
 
 	var CgSlider = function (_EventEmitter) {
 	  _inherits(CgSlider, _EventEmitter);
@@ -149,6 +159,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	                setting.push(setting[0] || constructor.DEFAULT_SETTINGS.tabindex[0]);
 	              }
 	            }
+	          } else {
+	            throw new Error(this.name + ' error: type of passed setting \'' + name + '\' is not supported.');
+	          }
+	          break;
+
+	        case 'ariaLabel':
+	        case 'ariaLabelledBy':
+	        case 'ariaDescribedBy':
+	          if (typeof setting === 'string') {
+	            setting = [setting, setting];
+	          } else if (Array.isArray(setting)) {
+	            if (setting.length > 2) {
+	              setting.length = 2;
+	            } else {
+	              while (setting.length < 2) {
+	                setting.push(setting[0] || constructor.DEFAULT_SETTINGS[name]);
+	              }
+	            }
+	          } else {
+	            throw new Error(this.name + ' error: type of passed setting \'' + name + '\' is not supported.');
 	          }
 	          break;
 
@@ -174,6 +204,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: '_fixSettings',
 	    value: function _fixSettings(settings) {
+	      // aria labels priority
+	      if (settings.ariaDescribedBy) {
+	        settings.ariaLabel = '';
+	        settings.ariaLabelledBy = '';
+	      }
+	      if (settings.ariaLabelledBy) {
+	        settings.ariaLabel = '';
+	      }
+
 	      for (var name in settings) {
 	        if (settings.hasOwnProperty(name)) {
 	          settings[name] = this._fixSetting(name, settings[name]);
@@ -207,20 +246,47 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 
 	  /**
-	   * DOM Element which contains slider.
-	   * @returns {Element}
+	   *
+	   * @returns {string|string[]}
 	   */
 
 
 	  _createClass(CgSlider, [{
-	    key: 'setSetting',
+	    key: 'getSetting',
 
+
+	    /**
+	     * Returns value of specified setting.
+	     * @param {string} name - setting name.
+	     * @returns {*}
+	     */
+	    value: function getSetting(name) {
+	      switch (name) {
+	        case 'min':
+	        case 'max':
+	        case 'step':
+	        case 'isRange':
+	          return this._settings[name];
+
+	        case 'tabindex':
+	        case 'ariaLabel':
+	        case 'ariaLabelledBy':
+	        case 'ariaDescribedBy':
+	          return this.isRange ? this._settings[name] : this._settings[name][1];
+
+	        default:
+	          throw new Error(this.constructor.name + ' getSetting error: passed setting \'' + name + '\' is not supported.');
+	      }
+	    }
 
 	    /**
 	     *
 	     * @param {string} name
 	     * @param {*} val
 	     */
+
+	  }, {
+	    key: 'setSetting',
 	    value: function setSetting(name, val) {
 	      val = this.constructor._fixSetting(name, val);
 
@@ -228,18 +294,42 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'min':
 	        case 'max':
 	        case 'step':
-	          //todo: redraw
 	          this._settings[name] = val;
+
+	          if (this._value) {
+	            // reset value to apply it with new limits and step
+	            this._setValue(this.value);
+	          }
+
+	          this._updateAriaLimits();
+	          //todo: redraw ticks
 	          break;
 
 	        case 'isRange':
-	          //todo: if it different move to setter
 	          this._settings.isRange = !!val;
-
+	          //todo: redraw handles
 	          break;
 
 	        case 'tabindex':
-	          this.tabindex = val;
+	          this._settings.tabindex = val;
+	          if (this._minHandleElement) {
+	            this._minHandleElement.setAttribute('tabindex', this._settings.tabindex[0]);
+	          }
+	          if (this._maxHandleElement) {
+	            this._maxHandleElement.setAttribute('tabindex', this._settings.tabindex[1]);
+	          }
+	          break;
+
+	        case 'ariaLabel':
+	        case 'ariaLabelledBy':
+	        case 'ariaDescribedBy':
+	          // clear other aria label settings
+	          this._settings.ariaLabel = ['', ''];
+	          this._settings.ariaLabelledBy = ['', ''];
+	          this._settings.ariaDescribedBy = ['', ''];
+	          this._settings[name] = val;
+
+	          this._updateAriaLabels();
 	          break;
 
 	        default:
@@ -257,19 +347,84 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this._makeDraggable();
 	      this._addKeyboardListeners();
 	    }
+
+	    /**
+	     * Adds interactivity by keyboard.
+	     * @private
+	     */
+
 	  }, {
 	    key: '_addKeyboardListeners',
 	    value: function _addKeyboardListeners() {
-	      //todo:
+	      var self = this;
+
+	      this._minHandleElement.addEventListener('keydown', onkeydown);
+	      this._maxHandleElement.addEventListener('keydown', onkeydown);
+
+	      function onkeydown(e) {
+	        var isMaxHandle = _cgComponentUtils2.default.hasClass(this, MAX_HANDLE_CLASS);
+	        var newVal = void 0;
+	        var change = void 0;
+
+	        switch ((0, _keycode2.default)(e)) {
+	          // min value
+	          case 'home':
+	            newVal = isMaxHandle ? self.min : [self.min, self._value[1]];
+	            break;
+
+	          // max value
+	          case 'end':
+	            newVal = isMaxHandle ? self.max : [self.max, self._value[1]];
+	            break;
+
+	          // increase
+	          case 'up':
+	          case 'right':
+	            newVal = isMaxHandle ? self._value[1] + self.step : [self._value[0] + self.step, self._value[1]];
+	            break;
+
+	          // decrease
+	          case 'down':
+	          case 'left':
+	            newVal = isMaxHandle ? self._value[1] - self.step : [self._value[0] - self.step, self._value[1]];
+	            break;
+
+	          // Large increase
+	          case 'page up':
+	            change = LARGE_CHANGE_MULTIPLIER * self.step;
+	            newVal = isMaxHandle ? self._value[1] + change : [self._value[0] + change, self._value[1]];
+	            break;
+
+	          // Large decrease
+	          case 'page down':
+	            change = LARGE_CHANGE_MULTIPLIER * self.step;
+	            newVal = isMaxHandle ? self._value[1] - change : [self._value[0] - change, self._value[1]];
+	            break;
+	        }
+	        if (typeof newVal === 'undefined' || isNaN(newVal) && (isNaN(newVal[0]) || isNaN(newVal[1]))) {
+	          return;
+	        }
+
+	        //todo: emit start and stop change events
+	        self._setValue(newVal);
+
+	        e.preventDefault();
+	        e.stopPropagation();
+	      }
 	    }
+
+	    /**
+	     * Makes slider handles draggable.
+	     * @private
+	     */
+
 	  }, {
 	    key: '_makeDraggable',
 	    value: function _makeDraggable() {
 	      var self = this;
+	      //todo: touch events
 	      this._minHandleElement.addEventListener('mousedown', onmousedown);
 	      this._maxHandleElement.addEventListener('mousedown', onmousedown);
-	      this._minHandleElement.addEventListener('keydown', onkeydown);
-	      this._maxHandleElement.addEventListener('keydown', onkeydown);
 
 	      var dragData = {
 	        startHandlePos: null,
@@ -283,9 +438,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _cgComponentUtils2.default.extendEventObject(e);
 
 	        dragData.dragHandle = this;
-	        dragData.isMaxHandle = _cgComponentUtils2.default.hasClass(this, MAX_HANDLE_CLASS);
+	        dragData.isMaxHandle = _cgComponentUtils2.default.hasClass(dragData.dragHandle, MAX_HANDLE_CLASS);
 	        dragData.containerWidth = self._handlesContainer.getBoundingClientRect().width;
-	        dragData.startHandlePos = _helpFuncs2.default.getHandlePosition(this, self._handlesContainer);
+	        dragData.startHandlePos = _helpFuncs2.default.getHandlePosition(dragData.dragHandle, self._handlesContainer);
 	        dragData.startMousePos = {
 	          x: e.px,
 	          y: e.py
@@ -299,8 +454,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        _cgComponentUtils2.default.extendEventObject(e);
 
 	        var percent = _helpFuncs2.default.getPercent(dragData.startHandlePos.x + e.px - dragData.startMousePos.x, dragData.containerWidth);
-
-	        var value = _helpFuncs2.default.calcValueByPercent(percent, self.min, self.max);
+	        var value = _helpFuncs2.default.calcValueByPercent(percent, self.max, self.min);
 
 	        value = dragData.isMaxHandle ? value : [value, self.value[1]];
 	        self._setValue(value);
@@ -323,42 +477,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //todo: emit stop change event
 
 	        e.preventDefault();
-	      }
-
-	      function onkeydown(e) {
-	        var isMaxHandle = _cgComponentUtils2.default.hasClass(this, MAX_HANDLE_CLASS);
-	        var newVal;
-
-	        switch ((0, _keycode2.default)(e)) {
-	          case 'home':
-	          case 'page down':
-	            newVal = isMaxHandle ? self.min : [self.min, self._value[1]];
-	            break;
-
-	          case 'end':
-	          case 'page up':
-	            newVal = isMaxHandle ? self.max : [self.max, self._value[1]];
-	            break;
-
-	          case 'up':
-	          case 'right':
-	            newVal = isMaxHandle ? self._value[1] + self.step : [self._value[0] + self.step, self._value[1]];
-	            break;
-
-	          case 'down':
-	          case 'left':
-	            newVal = isMaxHandle ? self._value[1] - self.step : [self._value[0] - self.step, self._value[1]];
-	            break;
-	        }
-	        if (typeof newVal === 'undefined' || isNaN(newVal) && (isNaN(newVal[0]) || isNaN(newVal[1]))) {
-	          return;
-	        }
-
-	        //todo: emit start and stop change events
-	        self._setValue(newVal);
-
-	        e.preventDefault();
-	        e.stopPropagation();
 	      }
 	    }
 
@@ -416,7 +534,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        rootClasses.push(RANGE_CLASS);
 	      }
 
-	      var elementHTML = '\n      <div class="' + rootClasses.join(' ') + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MIN_HANDLE_CLASS + '" tabindex="' + this.tabindex[0] + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MAX_HANDLE_CLASS + '" tabindex="' + this.tabindex[1] + '"></div>\n        </div>\n      </div>\n    ';
+	      var elementHTML = '\n      <div class="' + rootClasses.join(' ') + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MIN_HANDLE_CLASS + '" tabindex="' + this._settings.tabindex[0] + '" role="slider"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MAX_HANDLE_CLASS + '" tabindex="' + this._settings.tabindex[1] + '" role="slider"></div>\n        </div>\n      </div>\n    ';
 
 	      this._rootElement = _cgComponentUtils2.default.createHTML(elementHTML);
 	      this._progressElement = this._rootElement.querySelector('.' + PROGRESS_CLASS);
@@ -424,15 +542,63 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this._minHandleElement = this._handlesContainer.querySelector('.' + MIN_HANDLE_CLASS);
 	      this._maxHandleElement = this._handlesContainer.querySelector('.' + MAX_HANDLE_CLASS);
 
-	      this.container.appendChild(this._rootElement);
+	      this._updateAriaLimits();
+	      this._updateAriaLabels();
 
-	      // todo: remove this code when interactive will be added
-	      //this._progressElement.style.width = '50%';
-	      //this._maxHandleElement.style.left = '50%';
+	      this.container.appendChild(this._rootElement);
 	    }
 	  }, {
+	    key: '_updateAriaLabels',
+	    value: function _updateAriaLabels() {
+	      var settings = this._settings;
+	      var minHandle = this._minHandleElement;
+	      var maxHandle = this._maxHandleElement;
+
+	      if (!minHandle || !maxHandle) return;
+
+	      _helpFuncs2.default.setAttributeOrRemoveIfEmpty(minHandle, 'aria-label', settings.ariaLabel[0]);
+	      _helpFuncs2.default.setAttributeOrRemoveIfEmpty(maxHandle, 'aria-label', settings.ariaLabel[1]);
+
+	      _helpFuncs2.default.setAttributeOrRemoveIfEmpty(minHandle, 'aria-labelledby', settings.ariaLabelledBy[0]);
+	      _helpFuncs2.default.setAttributeOrRemoveIfEmpty(maxHandle, 'aria-labelledby', settings.ariaLabelledBy[1]);
+
+	      _helpFuncs2.default.setAttributeOrRemoveIfEmpty(minHandle, 'aria-describedby', settings.ariaDescribedBy[0]);
+	      _helpFuncs2.default.setAttributeOrRemoveIfEmpty(maxHandle, 'aria-describedby', settings.ariaDescribedBy[1]);
+	    }
+
+	    /**
+	     * Updates aria-valuemin/aria-valuemax attributes for handles.
+	     * @private
+	     */
+
+	  }, {
+	    key: '_updateAriaLimits',
+	    value: function _updateAriaLimits() {
+	      var minHandle = this._minHandleElement;
+	      var maxHandle = this._maxHandleElement;
+
+	      if (!minHandle || !maxHandle) return;
+
+	      //todo: add aria-value formatter
+	      minHandle.setAttribute('aria-valuemin', this.min);
+	      minHandle.setAttribute('aria-valuemax', this.max);
+
+	      maxHandle.setAttribute('aria-valuemin', this.min);
+	      maxHandle.setAttribute('aria-valuemax', this.max);
+	    }
+
+	    /**
+	     * Sets slider value.
+	     * @param {number|Array} val - New value.
+	     * @param {boolean} [force=false] - If `true` will set value with emitting CHANGE event even value is not changed.
+	     * @private
+	     */
+
+	  }, {
 	    key: '_setValue',
-	    value: function _setValue(val, force) {
+	    value: function _setValue(val) {
+	      var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
 	      if (typeof val !== 'number' && !Array.isArray(val)) {
 	        throw new Error(this.constructor.name + ' set value error: passed value\'s (' + val + ') type is not supported.');
 	      }
@@ -443,7 +609,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        val = [minVal, val];
 	      }
 
-	      var isMaxChanged;
+	      var isMaxChanged = void 0;
 
 	      if (typeof this._value !== 'undefined') {
 	        isMaxChanged = this._value[1] !== val[1];
@@ -456,15 +622,78 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this._value = val;
 
 	      if (valueChanged || force) {
-	        var minPercentVal = _helpFuncs2.default.getPercent(val[0], this.max);
-	        var maxPercentVal = _helpFuncs2.default.getPercent(val[1], this.max);
+	        var minPercentVal = _helpFuncs2.default.getPercent(val[0], this.max, this.min);
+	        var maxPercentVal = _helpFuncs2.default.getPercent(val[1], this.max, this.min);
 	        this._minHandleElement.style.left = minPercentVal + '%';
 	        this._maxHandleElement.style.left = maxPercentVal + '%';
+	        //todo: add aria-value formatter
+	        this._minHandleElement.setAttribute('aria-valuenow', val[0]);
+	        this._maxHandleElement.setAttribute('aria-valuenow', val[1]);
 	        this._progressElement.style.left = minPercentVal + '%';
 	        this._progressElement.style.width = maxPercentVal - minPercentVal + '%';
 	        this.emit(this.constructor.EVENTS.CHANGE, this.value);
 	      }
 	    }
+	  }, {
+	    key: 'ariaLabel',
+	    get: function get() {
+	      return this.getSetting('ariaLabel');
+	    }
+
+	    /**
+	     *
+	     * @param {string|string[]} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this.setSetting('ariaLabel', val);
+	    }
+
+	    /**
+	     *
+	     * @returns {string|string[]}
+	     */
+
+	  }, {
+	    key: 'ariaLabelledBy',
+	    get: function get() {
+	      return this.getSetting('ariaLabelledBy');
+	    }
+
+	    /**
+	     *
+	     * @param {string|string[]} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this.setSetting('ariaLabelledBy', val);
+	    }
+
+	    /**
+	     *
+	     * @returns {string|string[]}
+	     */
+
+	  }, {
+	    key: 'ariaDescribedBy',
+	    get: function get() {
+	      return this.getSetting('ariaDescribedBy');
+	    }
+
+	    /**
+	     *
+	     * @param {string|string[]} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this.setSetting('ariaDescribedBy', val);
+	    }
+
+	    /**
+	     * DOM Element which contains slider.
+	     * @returns {Element}
+	     */
+
 	  }, {
 	    key: 'container',
 	    get: function get() {
@@ -479,7 +708,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'isRange',
 	    get: function get() {
-	      return this._settings.isRange;
+	      return this.getSetting('isRange');
 	    }
 
 	    /**
@@ -499,7 +728,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'min',
 	    get: function get() {
-	      return this._settings.min;
+	      return this.getSetting('min');
 	    }
 
 	    /**
@@ -519,7 +748,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'max',
 	    get: function get() {
-	      return this._settings.max;
+	      return this.getSetting('max');
 	    }
 
 	    /**
@@ -539,7 +768,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: 'step',
 	    get: function get() {
-	      return this._settings.step;
+	      return this.getSetting('step');
 	    }
 
 	    /**
@@ -553,29 +782,22 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    /**
 	     *
-	     * @returns {number[]}
+	     * @returns {number|number[]}
 	     */
 
 	  }, {
 	    key: 'tabindex',
 	    get: function get() {
-	      return this._settings.tabindex;
+	      return this.getSetting('tabindex');
 	    }
 
 	    /**
 	     *
-	     * @param {number[]} val
+	     * @param {number|number[]} val
 	     */
 	    ,
 	    set: function set(val) {
-	      val = this.constructor._fixSetting('tabindex', val);
-	      this._settings.tabindex = val;
-	      if (this._minHandleElement) {
-	        this._minHandleElement.setAttribute('tabindex', this._settings.tabindex[0]);
-	      }
-	      if (this._maxHandleElement) {
-	        this._maxHandleElement.setAttribute('tabindex', this._settings.tabindex[1]);
-	      }
+	      this.setSetting('tabindex', val);
 	    }
 
 	    /**
@@ -613,7 +835,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  min: 0,
 	  max: 100,
 	  step: 1,
-	  tabindex: [0, 0]
+	  tabindex: [0, 0],
+	  ariaLabel: '',
+	  ariaLabelledBy: '',
+	  ariaDescribedBy: ''
 	};
 	CgSlider.EVENTS = {
 	  CHANGE: 'change',
@@ -1753,11 +1978,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	  /**
 	   *
 	   * @param {number} percent
-	   * @param {number} min
 	   * @param {number} max
+	   * @param {number} [min = 0]
 	   * @returns {number}
 	   */
-	  calcValueByPercent: function calcValueByPercent(percent, min, max) {
+	  calcValueByPercent: function calcValueByPercent(percent, max) {
+	    var min = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+
 	    return min + (max - min) * percent / 100;
 	  },
 
@@ -1824,8 +2051,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @returns {{x: number, y: number}}
 	   */
 	  getHandlePosition: function getHandlePosition(handleElement, container) {
-	    container = container || handleElement.parentElement;
-
 	    var bounds = handleElement.getBoundingClientRect();
 	    var containerBounds = container.getBoundingClientRect();
 
@@ -1835,8 +2060,33 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	  },
 
+	  /**
+	   *
+	   * @param {number} val
+	   * @param {number} max
+	   * @param {number} [min = 0]
+	   * @returns {number}
+	   */
 	  getPercent: function getPercent(val, max) {
-	    return Math.min(100, Math.max(0, 100 * val / max));
+	    var min = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
+
+	    return Math.min(100, Math.max(0, 100 * (val - min) / (max - min)));
+	  },
+
+	  /**
+	   * Sets attribute with `attrName` to passed element if `attrVal` is not empty otherwise remove this attribute.
+	   * @param {Element} element
+	   * @param {string} attrName
+	   * @param {string} [attrVal]
+	   */
+	  setAttributeOrRemoveIfEmpty: function setAttributeOrRemoveIfEmpty(element, attrName) {
+	    var attrVal = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : '';
+
+	    if (attrVal) {
+	      element.setAttribute(attrName, attrVal);
+	    } else {
+	      element.removeAttribute(attrName);
+	    }
 	  }
 	};
 

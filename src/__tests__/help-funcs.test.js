@@ -5,7 +5,7 @@ describe('Help functions:', function () {
 
   describe('calcValueByPercent', function () {
     it('should calculate right value', function () {
-      expect(helpFuncs.calcValueByPercent(30, 0, 10)).toBe(3);
+      expect(helpFuncs.calcValueByPercent(30, 10, 0)).toBe(3);
     });
   });
 
@@ -44,6 +44,10 @@ describe('Help functions:', function () {
   describe('getPercent', function () {
     it('should calculate right value', function () {
       expect(helpFuncs.getPercent(15, 20)).toEqual(75);
+    });
+
+    it('should calculate right value with non zero minimum', function () {
+      expect(helpFuncs.getPercent(15, 20, 10)).toEqual(50);
     });
 
     it('should limit value: it can not be greater than 100', function () {

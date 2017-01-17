@@ -19,6 +19,14 @@ import helpFuncs from './help-funcs';
  * @property {number} max - Maximum slider value.
  * @property {number} step
  * @property {number|number[]} tabindex - tabindex of handle element. It can be array of two numbers for range slider.
+ * @property {string|string[]} ariaLabel - string that labels the current slider for screen readers. It can be array of two strings for range slider.
+ *                                         For more info see [WAI-ARIA specification/#aria-label]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-label}.
+ * @property {string|string[]} ariaLabelledBy - id of the element that labels the current slider. It can be array of two strings for range slider.
+ *                                             This property has higher priority than `ariaLabel`.
+ *                                             For more info see [WAI-ARIA specification/#aria-labelledby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-labelledby}.
+ * @property {string|string[]} ariaDescribedBy - id of the element that describes the current slider. It can be array of two strings for range slider.
+ *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
+ *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
  */
 
 const SLIDER_CLASS = 'cg-slider';
@@ -28,6 +36,8 @@ const PROGRESS_CLASS = `${SLIDER_CLASS}-progress`;
 const HANDLE_CLASS = `${SLIDER_CLASS}-handle`;
 const MIN_HANDLE_CLASS = `${SLIDER_CLASS}-handle-min`;
 const MAX_HANDLE_CLASS = `${SLIDER_CLASS}-handle-max`;
+
+const LARGE_CHANGE_MULTIPLIER = 10;
 
 class CgSlider extends EventEmitter {
 
@@ -41,7 +51,10 @@ class CgSlider extends EventEmitter {
     min: 0,
     max: 100,
     step: 1,
-    tabindex: [0, 0]
+    tabindex: [0, 0],
+    ariaLabel: '',
+    ariaLabelledBy: '',
+    ariaDescribedBy: '',
   };
 
   /**
@@ -72,6 +85,30 @@ class CgSlider extends EventEmitter {
             }
           }
         }
+        else {
+          throw new Error(`${this.name} error: type of passed setting '${name}' is not supported.`);
+        }
+        break;
+
+      case 'ariaLabel':
+      case 'ariaLabelledBy':
+      case 'ariaDescribedBy':
+        if (typeof setting === 'string') {
+          setting = [setting, setting];
+        }
+        else if (Array.isArray(setting)) {
+          if (setting.length > 2) {
+            setting.length = 2;
+          }
+          else {
+            while (setting.length < 2) {
+              setting.push(setting[0] || constructor.DEFAULT_SETTINGS[name]);
+            }
+          }
+        }
+        else {
+          throw new Error(`${this.name} error: type of passed setting '${name}' is not supported.`);
+        }
         break;
 
       default:
@@ -87,6 +124,15 @@ class CgSlider extends EventEmitter {
    * @private
    */
   static _fixSettings(settings) {
+    // aria labels priority
+    if (settings.ariaDescribedBy) {
+      settings.ariaLabel = '';
+      settings.ariaLabelledBy = '';
+    }
+    if (settings.ariaLabelledBy) {
+      settings.ariaLabel = '';
+    }
+
     for (let name in settings) {
       if (settings.hasOwnProperty(name)) {
         settings[name] = this._fixSetting(name, settings[name]);
@@ -114,6 +160,54 @@ class CgSlider extends EventEmitter {
   }
 
   /**
+   *
+   * @returns {string|string[]}
+   */
+  get ariaLabel() {
+    return this.getSetting('ariaLabel');
+  }
+
+  /**
+   *
+   * @param {string|string[]} val
+   */
+  set ariaLabel(val) {
+    this.setSetting('ariaLabel', val);
+  }
+
+  /**
+   *
+   * @returns {string|string[]}
+   */
+  get ariaLabelledBy() {
+    return this.getSetting('ariaLabelledBy');
+  }
+
+  /**
+   *
+   * @param {string|string[]} val
+   */
+  set ariaLabelledBy(val) {
+    this.setSetting('ariaLabelledBy', val);
+  }
+
+  /**
+   *
+   * @returns {string|string[]}
+   */
+  get ariaDescribedBy() {
+    return this.getSetting('ariaDescribedBy');
+  }
+
+  /**
+   *
+   * @param {string|string[]} val
+   */
+  set ariaDescribedBy(val) {
+    this.setSetting('ariaDescribedBy', val);
+  }
+
+  /**
    * DOM Element which contains slider.
    * @returns {Element}
    */
@@ -126,7 +220,7 @@ class CgSlider extends EventEmitter {
    * @returns {boolean}
    */
   get isRange() {
-    return this._settings.isRange;
+    return this.getSetting('isRange');
   }
 
   /**
@@ -142,7 +236,7 @@ class CgSlider extends EventEmitter {
    * @returns {number}
    */
   get min() {
-    return this._settings.min;
+    return this.getSetting('min');
   }
 
   /**
@@ -158,7 +252,7 @@ class CgSlider extends EventEmitter {
    * @returns {number}
    */
   get max() {
-    return this._settings.max;
+    return this.getSetting('max');
   }
 
   /**
@@ -174,7 +268,7 @@ class CgSlider extends EventEmitter {
    * @returns {number}
    */
   get step() {
-    return this._settings.step;
+    return this.getSetting('step');
   }
 
   /**
@@ -187,25 +281,18 @@ class CgSlider extends EventEmitter {
 
   /**
    *
-   * @returns {number[]}
+   * @returns {number|number[]}
    */
   get tabindex() {
-    return this._settings.tabindex;
+    return this.getSetting('tabindex');
   }
 
   /**
    *
-   * @param {number[]} val
+   * @param {number|number[]} val
    */
   set tabindex(val) {
-    val = this.constructor._fixSetting('tabindex', val);
-    this._settings.tabindex = val;
-    if (this._minHandleElement) {
-      this._minHandleElement.setAttribute('tabindex', this._settings.tabindex[0]);
-    }
-    if (this._maxHandleElement) {
-      this._maxHandleElement.setAttribute('tabindex', this._settings.tabindex[1]);
-    }
+    this.setSetting('tabindex', val);
   }
 
   /**
@@ -228,6 +315,30 @@ class CgSlider extends EventEmitter {
   }
 
   /**
+   * Returns value of specified setting.
+   * @param {string} name - setting name.
+   * @returns {*}
+   */
+  getSetting(name) {
+    switch (name) {
+      case 'min':
+      case 'max':
+      case 'step':
+      case 'isRange':
+        return this._settings[name];
+
+      case 'tabindex':
+      case 'ariaLabel':
+      case 'ariaLabelledBy':
+      case 'ariaDescribedBy':
+        return this.isRange ? this._settings[name] : this._settings[name][1];
+
+      default:
+        throw new Error(`${this.constructor.name} getSetting error: passed setting '${name}' is not supported.`);
+    }
+  }
+
+  /**
    *
    * @param {string} name
    * @param {*} val
@@ -239,18 +350,42 @@ class CgSlider extends EventEmitter {
       case 'min':
       case 'max':
       case 'step':
-        //todo: redraw
         this._settings[name] = val;
+
+        if (this._value) {
+          // reset value to apply it with new limits and step
+          this._setValue(this.value);
+        }
+
+        this._updateAriaLimits();
+        //todo: redraw ticks
         break;
 
       case 'isRange':
-        //todo: if it different move to setter
         this._settings.isRange = !!val;
-
+        //todo: redraw handles
         break;
 
       case 'tabindex':
-        this.tabindex = val;
+        this._settings.tabindex = val;
+        if (this._minHandleElement) {
+          this._minHandleElement.setAttribute('tabindex', this._settings.tabindex[0]);
+        }
+        if (this._maxHandleElement) {
+          this._maxHandleElement.setAttribute('tabindex', this._settings.tabindex[1]);
+        }
+        break;
+
+      case 'ariaLabel':
+      case 'ariaLabelledBy':
+      case 'ariaDescribedBy':
+        // clear other aria label settings
+        this._settings.ariaLabel = ['', ''];
+        this._settings.ariaLabelledBy = ['', ''];
+        this._settings.ariaDescribedBy = ['', ''];
+        this._settings[name] = val;
+
+        this._updateAriaLabels();
         break;
 
       default:
@@ -266,18 +401,81 @@ class CgSlider extends EventEmitter {
     this._addKeyboardListeners();
   }
 
+  /**
+   * Adds interactivity by keyboard.
+   * @private
+   */
   _addKeyboardListeners() {
-    //todo:
-  }
-
-  _makeDraggable() {
     const self = this;
-    this._minHandleElement.addEventListener('mousedown', onmousedown);
-    this._maxHandleElement.addEventListener('mousedown', onmousedown);
+
     this._minHandleElement.addEventListener('keydown', onkeydown);
     this._maxHandleElement.addEventListener('keydown', onkeydown);
 
-    var dragData = {
+    function onkeydown(e) {
+      const isMaxHandle = utils.hasClass(this, MAX_HANDLE_CLASS);
+      let newVal;
+      let change;
+
+      switch (keycode(e)) {
+        // min value
+        case 'home':
+          newVal = isMaxHandle ? self.min : [self.min, self._value[1]];
+          break;
+
+        // max value
+        case 'end':
+          newVal = isMaxHandle ? self.max : [self.max, self._value[1]];
+          break;
+
+        // increase
+        case 'up':
+        case 'right':
+          newVal = isMaxHandle ? self._value[1] + self.step : [self._value[0] + self.step, self._value[1]];
+          break;
+
+        // decrease
+        case 'down':
+        case 'left':
+          newVal = isMaxHandle ? self._value[1] - self.step : [self._value[0] - self.step, self._value[1]];
+          break;
+
+        // Large increase
+        case 'page up':
+          change = LARGE_CHANGE_MULTIPLIER * self.step;
+          newVal = isMaxHandle ? self._value[1] + change : [self._value[0] + change, self._value[1]];
+          break;
+
+        // Large decrease
+        case 'page down':
+          change = LARGE_CHANGE_MULTIPLIER * self.step;
+          newVal = isMaxHandle ? self._value[1] - change : [self._value[0] - change, self._value[1]];
+          break;
+      }
+      if (typeof newVal === 'undefined'
+          || isNaN(newVal)
+             && (isNaN(newVal[0]) || isNaN(newVal[1]))) {
+        return;
+      }
+
+      //todo: emit start and stop change events
+      self._setValue(newVal);
+
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  }
+
+  /**
+   * Makes slider handles draggable.
+   * @private
+   */
+  _makeDraggable() {
+    const self = this;
+    //todo: touch events
+    this._minHandleElement.addEventListener('mousedown', onmousedown);
+    this._maxHandleElement.addEventListener('mousedown', onmousedown);
+
+    let dragData = {
       startHandlePos: null,
       startMousePos: null,
       dragHandle: null,
@@ -289,9 +487,9 @@ class CgSlider extends EventEmitter {
       utils.extendEventObject(e);
 
       dragData.dragHandle = this;
-      dragData.isMaxHandle = utils.hasClass(this, MAX_HANDLE_CLASS);
+      dragData.isMaxHandle = utils.hasClass(dragData.dragHandle, MAX_HANDLE_CLASS);
       dragData.containerWidth = self._handlesContainer.getBoundingClientRect().width;
-      dragData.startHandlePos = helpFuncs.getHandlePosition(this, self._handlesContainer);
+      dragData.startHandlePos = helpFuncs.getHandlePosition(dragData.dragHandle, self._handlesContainer);
       dragData.startMousePos = {
         x: e.px,
         y: e.py
@@ -305,8 +503,7 @@ class CgSlider extends EventEmitter {
       utils.extendEventObject(e);
 
       const percent = helpFuncs.getPercent(dragData.startHandlePos.x + e.px - dragData.startMousePos.x, dragData.containerWidth);
-
-      var value = helpFuncs.calcValueByPercent(percent, self.min, self.max);
+      let value = helpFuncs.calcValueByPercent(percent, self.max, self.min);
 
       value = dragData.isMaxHandle ? value : [value, self.value[1]];
       self._setValue(value);
@@ -329,44 +526,6 @@ class CgSlider extends EventEmitter {
       //todo: emit stop change event
 
       e.preventDefault();
-    }
-
-    function onkeydown(e) {
-      const isMaxHandle = utils.hasClass(this, MAX_HANDLE_CLASS);
-      var newVal;
-
-      switch (keycode(e)) {
-        case 'home':
-        case 'page down':
-          newVal = isMaxHandle ? self.min : [self.min, self._value[1]];
-          break;
-
-        case 'end':
-        case 'page up':
-          newVal = isMaxHandle ? self.max : [self.max, self._value[1]];
-          break;
-
-        case 'up':
-        case 'right':
-          newVal = isMaxHandle ? self._value[1] + self.step : [self._value[0] + self.step, self._value[1]];
-          break;
-
-        case 'down':
-        case 'left':
-          newVal = isMaxHandle ? self._value[1] - self.step : [self._value[0] - self.step, self._value[1]];
-          break;
-      }
-      if (typeof newVal === 'undefined'
-          || isNaN(newVal)
-             && (isNaN(newVal[0]) || isNaN(newVal[1]))) {
-        return;
-      }
-
-      //todo: emit start and stop change events
-      self._setValue(newVal);
-
-      e.preventDefault();
-      e.stopPropagation();
     }
   }
 
@@ -415,18 +574,18 @@ class CgSlider extends EventEmitter {
    * @private
    */
   _render() {
-    var rootClasses = [SLIDER_CLASS];
+    let rootClasses = [SLIDER_CLASS];
 
     if (this.isRange) {
       rootClasses.push(RANGE_CLASS);
     }
 
-    var elementHTML = `
+    const elementHTML = `
       <div class="${rootClasses.join(' ')}">
         <div class="${SLIDER_BG}">
           <div class="${PROGRESS_CLASS}"></div>
-          <div class="${HANDLE_CLASS} ${MIN_HANDLE_CLASS}" tabindex="${this.tabindex[0]}"></div>
-          <div class="${HANDLE_CLASS} ${MAX_HANDLE_CLASS}" tabindex="${this.tabindex[1]}"></div>
+          <div class="${HANDLE_CLASS} ${MIN_HANDLE_CLASS}" tabindex="${this._settings.tabindex[0]}" role="slider"></div>
+          <div class="${HANDLE_CLASS} ${MAX_HANDLE_CLASS}" tabindex="${this._settings.tabindex[1]}" role="slider"></div>
         </div>
       </div>
     `;
@@ -437,15 +596,58 @@ class CgSlider extends EventEmitter {
     this._minHandleElement = this._handlesContainer.querySelector(`.${MIN_HANDLE_CLASS}`);
     this._maxHandleElement = this._handlesContainer.querySelector(`.${MAX_HANDLE_CLASS}`);
 
+    this._updateAriaLimits();
+    this._updateAriaLabels();
+
     this.container.appendChild(this._rootElement);
-
-    // todo: remove this code when interactive will be added
-    //this._progressElement.style.width = '50%';
-    //this._maxHandleElement.style.left = '50%';
-
   }
 
-  _setValue(val, force) {
+  _updateAriaLabels() {
+    const settings = this._settings;
+    const minHandle = this._minHandleElement;
+    const maxHandle = this._maxHandleElement;
+
+    if (!minHandle || !maxHandle)
+      return;
+
+    helpFuncs.setAttributeOrRemoveIfEmpty(minHandle, 'aria-label', settings.ariaLabel[0]);
+    helpFuncs.setAttributeOrRemoveIfEmpty(maxHandle, 'aria-label', settings.ariaLabel[1]);
+
+    helpFuncs.setAttributeOrRemoveIfEmpty(minHandle, 'aria-labelledby', settings.ariaLabelledBy[0]);
+    helpFuncs.setAttributeOrRemoveIfEmpty(maxHandle, 'aria-labelledby', settings.ariaLabelledBy[1]);
+
+    helpFuncs.setAttributeOrRemoveIfEmpty(minHandle, 'aria-describedby', settings.ariaDescribedBy[0]);
+    helpFuncs.setAttributeOrRemoveIfEmpty(maxHandle, 'aria-describedby', settings.ariaDescribedBy[1]);
+  }
+
+  /**
+   * Updates aria-valuemin/aria-valuemax attributes for handles.
+   * @private
+   */
+  _updateAriaLimits() {
+    const minHandle = this._minHandleElement;
+    const maxHandle = this._maxHandleElement;
+
+    if (!minHandle || !maxHandle)
+      return;
+
+    //todo: add aria-value formatter
+    minHandle.setAttribute('aria-valuemin', this.min);
+    minHandle.setAttribute('aria-valuemax', this.max);
+
+    maxHandle.setAttribute('aria-valuemin', this.min);
+    maxHandle.setAttribute('aria-valuemax', this.max);
+  }
+
+
+
+  /**
+   * Sets slider value.
+   * @param {number|Array} val - New value.
+   * @param {boolean} [force=false] - If `true` will set value with emitting CHANGE event even value is not changed.
+   * @private
+   */
+  _setValue(val, force = false) {
     if (typeof val !== 'number' && !Array.isArray(val)) {
       throw new Error(`${this.constructor.name} set value error: passed value's (${val}) type is not supported.`);
     }
@@ -456,7 +658,7 @@ class CgSlider extends EventEmitter {
       val = [minVal, val];
     }
 
-    var isMaxChanged;
+    let isMaxChanged;
 
     if (typeof this._value !== 'undefined') {
       isMaxChanged = this._value[1] !== val[1];
@@ -464,17 +666,20 @@ class CgSlider extends EventEmitter {
 
     val = helpFuncs.fixValue(val, this.min, this.max, this.step, !this.isRange, isMaxChanged);
 
-    var valueChanged = typeof this._value === 'undefined'
-                       || this._value[0] !== val[0]
-                       || this._value[1] !== val[1];
+    const valueChanged = typeof this._value === 'undefined'
+                         || this._value[0] !== val[0]
+                         || this._value[1] !== val[1];
 
     this._value = val;
 
     if (valueChanged || force) {
-      const minPercentVal = helpFuncs.getPercent(val[0], this.max);
-      const maxPercentVal = helpFuncs.getPercent(val[1], this.max);
+      const minPercentVal = helpFuncs.getPercent(val[0], this.max, this.min);
+      const maxPercentVal = helpFuncs.getPercent(val[1], this.max, this.min);
       this._minHandleElement.style.left = `${minPercentVal}%`;
       this._maxHandleElement.style.left = `${maxPercentVal}%`;
+      //todo: add aria-value formatter
+      this._minHandleElement.setAttribute('aria-valuenow', val[0]);
+      this._maxHandleElement.setAttribute('aria-valuenow', val[1]);
       this._progressElement.style.left = `${minPercentVal}%`;
       this._progressElement.style.width = `${maxPercentVal - minPercentVal}%`;
       this.emit(this.constructor.EVENTS.CHANGE, this.value);

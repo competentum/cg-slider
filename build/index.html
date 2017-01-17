@@ -5,35 +5,67 @@
     <title>cg-slider examples</title>
     <script type="text/javascript" src="cg-slider.js"></script>
     <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
         .cg-slider {
             margin-top: 20px;
             margin-bottom: 20px;
         }
+
+        #slider, #sliderValue {
+            display: inline-block;
+            vertical-align: middle;
+        }
+
+        #slider {
+            width: calc(100% - 4rem);
+        }
+
+        #sliderValue {
+            width: 2.5rem;
+            height: 2.5rem;
+            margin-left: 1rem;
+            line-height: 2.5rem;
+            text-align: center;
+            background-color: #17AC5B;
+            font-size: 1.2rem;
+            color: #fff;
+        }
     </style>
 </head>
-<body>
+<body role="application">
 
-<div id="slider"></div>
+<div>
+    <div id="slider"></div><!--
+    --><div id="sliderValue"></div>
+</div>
+
 <div id="range-slider"></div>
-<div id="sliderValue"></div>
 
 <script type="text/javascript">
-    var valueElement = document.getElementById('sliderValue');
-    var slider = new CgSlider({
-        container: 'slider',
-        initialValue: 50
-    });
-    var rangeSlider = new CgSlider({
-        container: 'range-slider',
-        isRange: true,
-        initialValue: [25, 75]
-    });
+  var valueElement = document.getElementById('sliderValue');
+  var slider = new CgSlider({
+    container: 'slider',
+    initialValue: 50,
+    ariaLabel: 'slider'
+  });
+  var rangeSlider = new CgSlider({
+    container: 'range-slider',
+    isRange: true,
+    initialValue: [25, 75]
+  });
 
-    slider.on(CgSlider.EVENTS.CHANGE, function (value) {
-//        console.log('changed to:', value);
-        valueElement.innerHTML = value;
-    });
+  slider.on(CgSlider.EVENTS.CHANGE, function (value) {
+//    console.log('changed to:', value);
+    updateSimpleValue();
+  });
+  updateSimpleValue();
 
+  function updateSimpleValue() {
+    valueElement.innerHTML = slider.value;
+  }
 
 </script>
 </body>

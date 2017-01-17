@@ -11,7 +11,7 @@
     "build": "webpack",
     "lint": "gulp lint",
     "test": "npm run u-test && npm run e2e-test",
-    "e2e-test": "concurrently -r -k -s first \"http-server ./build -p 4000 -s\" \"testcafe chrome ./test/e2e/**\"",
+    "e2e-test": "npm run build && concurrently -r -k -s first \"http-server ./build -p 4000 -s\" \"testcafe chrome ./test/e2e/**\"",
     "u-test": "jest"
   },
   "repository": {

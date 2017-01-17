@@ -45,6 +45,18 @@ test('Up', async t => {
     .expect(getSimpleSliderValue()).eql('51', 'Should be increased by a step value');
 });
 
+test('Page down', async t => {
+  await t
+    .pressKey('pagedown')
+    .expect(getSimpleSliderValue()).eql('40', 'Should be reduced by step value multiplied by ten');
+});
+
+test('Page up', async t => {
+  await t
+    .pressKey('pageup')
+    .expect(getSimpleSliderValue()).eql('60', 'Should be increased by step value multiplied by ten');
+});
+
 test('Home', async t => {
   await t
     .pressKey('home')
@@ -54,18 +66,6 @@ test('Home', async t => {
 test('End', async t => {
   await t
     .pressKey('end')
-    .expect(getSimpleSliderValue()).eql('100', 'Should be equal to maximum value');
-});
-
-test('Page down', async t => {
-  await t
-    .pressKey('pagedown')
-    .expect(getSimpleSliderValue()).eql('0', 'Should be equal to minimum value');
-});
-
-test('Page up', async t => {
-  await t
-    .pressKey('pageup')
     .expect(getSimpleSliderValue()).eql('100', 'Should be equal to maximum value');
 });
 
@@ -83,15 +83,15 @@ test('Check all modifying keys sequentially', async t => {
     .pressKey('up')
     .expect(getSimpleSliderValue()).eql('50', '[Up] Should be increased by a step value')
 
+    .pressKey('pagedown')
+    .expect(getSimpleSliderValue()).eql('40', '[Page Down] Should be reduced by step value multiplied by ten')
+
+    .pressKey('pageup')
+    .expect(getSimpleSliderValue()).eql('50', '[Page Up] Should be increased by step value multiplied by ten')
+
     .pressKey('home')
     .expect(getSimpleSliderValue()).eql('0', '[Home] Should be equal to minimum value')
 
     .pressKey('end')
-    .expect(getSimpleSliderValue()).eql('100', '[End] Should be equal to maximum value')
-
-    .pressKey('pagedown')
-    .expect(getSimpleSliderValue()).eql('0', '[Page Down] Should be equal to minimum value')
-
-    .pressKey('pageup')
-    .expect(getSimpleSliderValue()).eql('100', '[Page Up] Should be equal to maximum value');
+    .expect(getSimpleSliderValue()).eql('100', '[End] Should be equal to maximum value');
 });
