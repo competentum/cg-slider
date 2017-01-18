@@ -4,14 +4,42 @@
     <meta charset="UTF-8">
     <title>cg-slider examples</title>
     <script type="text/javascript" src="cg-slider.js"></script>
+    <link href='http://fonts.googleapis.com/css?family=Roboto+Slab&subset=latin,cyrillic-ext,cyrillic' rel='stylesheet'
+          type='text/css'>
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Roboto Slab', sans-serif;
+            margin: 0;
+            padding: 1rem 1.5rem;
+        }
+
+        .component-header {
+            margin-top: 0;
+            border-bottom: solid 2px #333333;
+        }
+
+        /* Adds margins to element the same as slider padding */
+        .slider-margined {
+            margin-left: 13px;
+            margin-right: 13px;
+        }
+
+        .component-block {
+            display: inline-block;
+            width: 100%;
+            margin-bottom: 10px;
+            vertical-align: top;
+        }
+
+        @media (min-width: 1024px) {
+            .component-block {
+                width: 50%;
+            }
         }
 
         .cg-slider {
-            margin-top: 20px;
-            margin-bottom: 20px;
+            margin-top: 10px;
+            margin-bottom: 10px;
         }
 
         #slider, #sliderValue {
@@ -20,13 +48,13 @@
         }
 
         #slider {
-            width: calc(100% - 4rem);
+            width: calc(100% - 3rem - 13px);
         }
 
         #sliderValue {
             width: 2.5rem;
             height: 2.5rem;
-            margin-left: 1rem;
+            margin-left: .5rem;
             line-height: 2.5rem;
             text-align: center;
             background-color: #17AC5B;
@@ -36,13 +64,20 @@
     </style>
 </head>
 <body role="application">
+<h1 class="component-header slider-margined">cg-slider</h1>
 
-<div>
-    <div id="slider"></div><!--
-    --><div id="sliderValue"></div>
+<div class="component-block">
+    <div class="component-sample-header slider-margined" aria-hidden="true">Simple Slider</div>
+    <div>
+        <div id="slider"></div><!--
+        --><div id="sliderValue" class="slider-margined"></div>
+    </div>
+</div><!--
+
+--><div class="component-block">
+    <div class="component-sample-header slider-margined" aria-hidden="true">Range Slider</div>
+    <div id="range-slider"></div>
 </div>
-
-<div id="range-slider"></div>
 
 <script type="text/javascript">
   var valueElement = document.getElementById('sliderValue');

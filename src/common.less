@@ -7,9 +7,10 @@
 @bar-height: 6px;
 
 .cg-slider {
-  padding: (@handle-size - @bar-height)/2;
+  padding: (@handle-size - @bar-height)/2 + @handle-hidden-border @handle-size/2 + @handle-hidden-border;
   position: relative;
   user-select: none;
+  box-sizing: border-box;
 
   .cg-slider-bg {
     height: @bar-height;
