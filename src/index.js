@@ -147,6 +147,31 @@ class CgSlider extends EventEmitter {
   }
 
   /**
+   * Returns true if two passed slider value are equal.
+   * @param {number[]|undefined} val_1 - slider value. Can be array of 2 numbers of undefined.
+   * @param {number[]|undefined} val_2 - same as val_1
+   * @return {boolean}
+   * @private
+   */
+  static _valuesAreEqual(val_1, val_2) {
+    // both of values are undefined
+    if (val_1 === val_2)
+      return true;
+
+    // one of values is undefined
+    if (typeof val_1 === 'undefined'
+        || typeof val_2 === 'undefined') {
+      return false;
+    }
+
+    if(!Array.isArray(val_1) || !Array.isArray(val_2))
+      throw new Error(`${this.name} error: type of passed value is not supported. It must be array of two numbers.`);
+
+    return val_1[0] === val_2[0]
+           && val_1[1] === val_2[1];
+  }
+
+  /**
    *
    * @param {SliderSettings} settings
    */
@@ -407,14 +432,23 @@ class CgSlider extends EventEmitter {
    */
   _addKeyboardListeners() {
     const self = this;
+    let eventsData = {
+      startValue: null,
+      startChangeEmitted: null,
+    };
 
-    this._minHandleElement.addEventListener('keydown', onkeydown);
-    this._maxHandleElement.addEventListener('keydown', onkeydown);
+    this._minHandleElement.addEventListener('keydown', onKeyDown);
+    this._maxHandleElement.addEventListener('keydown', onKeyDown);
 
-    function onkeydown(e) {
-      const isMaxHandle = utils.hasClass(this, MAX_HANDLE_CLASS);
+    function onKeyDown(e) {
+      const currentHandle = this;
+      const isMaxHandle = utils.hasClass(currentHandle, MAX_HANDLE_CLASS);
       let newVal;
       let change;
+
+      if (eventsData.startValue === null) {
+        eventsData.startValue = self._value;
+      }
 
       switch (keycode(e)) {
         // min value
@@ -457,11 +491,35 @@ class CgSlider extends EventEmitter {
         return;
       }
 
-      //todo: emit start and stop change events
+      // emit start change event if value will be changed
+      if (!eventsData.startChangeEmitted
+          && !self.constructor._valuesAreEqual(eventsData.startValue, self._prepareValueToSet(newVal))) {
+        eventsData.startChangeEmitted = true;
+        self.emit(self.constructor.EVENTS.START_CHANGE, self.value);
+        currentHandle.addEventListener('keyup', onKeyboardChangeStop);
+        currentHandle.addEventListener('blur', onKeyboardChangeStop);
+      }
+
       self._setValue(newVal);
 
       e.preventDefault();
       e.stopPropagation();
+    }
+
+    function onKeyboardChangeStop() {
+      this.removeEventListener('keyup', onKeyboardChangeStop);
+      this.removeEventListener('blur', onKeyboardChangeStop);
+
+      if (eventsData.startChangeEmitted) {
+        self.emit(self.constructor.EVENTS.STOP_CHANGE, self.value);
+      }
+
+      // clear eventsData
+      for (let key in eventsData) {
+        if (eventsData.hasOwnProperty(key)) {
+          eventsData[key] = null;
+        }
+      }
     }
   }
 
@@ -471,22 +529,25 @@ class CgSlider extends EventEmitter {
    */
   _makeDraggable() {
     const self = this;
-    this._minHandleElement.addEventListener('mousedown', onmousedown);
-    this._minHandleElement.addEventListener('touchstart', onmousedown);
-    this._maxHandleElement.addEventListener('mousedown', onmousedown);
-    this._maxHandleElement.addEventListener('touchstart', onmousedown);
+    this._minHandleElement.addEventListener('mousedown', onMouseDown);
+    this._minHandleElement.addEventListener('touchstart', onMouseDown);
+    this._maxHandleElement.addEventListener('mousedown', onMouseDown);
+    this._maxHandleElement.addEventListener('touchstart', onMouseDown);
 
     let dragData = {
+      startValue: null,
       startHandlePos: null,
       startMousePos: null,
       dragHandle: null,
-      containerWidth: null
+      containerWidth: null,
+      startChangeEmitted: null,
     };
 
     //todo: move handlers to prototype
-    function onmousedown(e) {
+    function onMouseDown(e) {
       utils.extendEventObject(e);
 
+      dragData.startValue = self._value;
       dragData.dragHandle = this;
       dragData.isMaxHandle = utils.hasClass(dragData.dragHandle, MAX_HANDLE_CLASS);
       dragData.containerWidth = self._handlesContainer.getBoundingClientRect().width;
@@ -496,31 +557,42 @@ class CgSlider extends EventEmitter {
         y: e.py
       };
 
-      document.addEventListener('mousemove', onmousemove);
-      document.addEventListener('touchmove', onmousemove);
-      document.addEventListener('mouseup', onmouseup);
-      document.addEventListener('touchend', onmouseup);
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('touchmove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+      document.addEventListener('touchend', onMouseUp);
     }
 
-    function onmousemove(e) {
+    function onMouseMove(e) {
       utils.extendEventObject(e);
 
       const percent = helpFuncs.getPercent(dragData.startHandlePos.x + e.px - dragData.startMousePos.x, dragData.containerWidth);
       let value = helpFuncs.calcValueByPercent(percent, self.max, self.min);
 
-      value = dragData.isMaxHandle ? value : [value, self.value[1]];
+      value = dragData.isMaxHandle ? value : [value, self._value[1]];
+
+      // emit start change event if value will be changed
+      if (!dragData.startChangeEmitted
+          && !self.constructor._valuesAreEqual(dragData.startValue, self._prepareValueToSet(value))) {
+        dragData.startChangeEmitted = true;
+        self.emit(self.constructor.EVENTS.START_CHANGE, self.value);
+      }
+
       self._setValue(value);
-      //todo: emit start change event
 
       e.preventDefault();
     }
 
-    function onmouseup(e) {
+    function onMouseUp(e) {
       utils.extendEventObject(e);
-      document.removeEventListener('mousemove', onmousemove);
-      document.removeEventListener('touchmove', onmousemove);
-      document.removeEventListener('mouseup', onmouseup);
-      document.removeEventListener('touchend', onmouseup);
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('touchmove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      document.removeEventListener('touchend', onMouseUp);
+
+      if (dragData.startChangeEmitted) {
+        self.emit(self.constructor.EVENTS.STOP_CHANGE, self.value);
+      }
 
       // clear dragData
       for (let key in dragData) {
@@ -528,7 +600,6 @@ class CgSlider extends EventEmitter {
           dragData[key] = null;
         }
       }
-      //todo: emit stop change event
 
       e.preventDefault();
     }
@@ -644,20 +715,15 @@ class CgSlider extends EventEmitter {
     maxHandle.setAttribute('aria-valuemax', this.max);
   }
 
-
-
   /**
-   * Sets slider value.
-   * @param {number|Array} val - New value.
-   * @param {boolean} [force=false] - If `true` will set value with emitting CHANGE event even value is not changed.
+   * Fixes passed value according to current settings.
+   * @param {number|number[]} val
+   * @return {number[]}
    * @private
    */
-  _setValue(val, force = false) {
-    if (typeof val !== 'number' && !Array.isArray(val)) {
-      throw new Error(`${this.constructor.name} set value error: passed value's (${val}) type is not supported.`);
-    }
-
+  _prepareValueToSet(val) {
     // for not range slider value can be number
+    // so it should be converted to array
     if (typeof val === 'number') {
       let minVal = this._value && this._value[0] || this.min;
       val = [minVal, val];
@@ -671,9 +737,23 @@ class CgSlider extends EventEmitter {
 
     val = helpFuncs.fixValue(val, this.min, this.max, this.step, !this.isRange, isMaxChanged);
 
-    const valueChanged = typeof this._value === 'undefined'
-                         || this._value[0] !== val[0]
-                         || this._value[1] !== val[1];
+    return val;
+  }
+
+  /**
+   * Sets slider value.
+   * @param {number|number[]} val - New value.
+   * @param {boolean} [force=false] - If `true` will set value with emitting CHANGE event even value is not changed.
+   * @private
+   */
+  _setValue(val, force = false) {
+    if (typeof val !== 'number' && !Array.isArray(val)) {
+      throw new Error(`${this.constructor.name} set value error: passed value's (${val}) type is not supported.`);
+    }
+
+    val = this._prepareValueToSet(val);
+
+    const valueChanged = !this.constructor._valuesAreEqual(this._value, val);
 
     this._value = val;
 

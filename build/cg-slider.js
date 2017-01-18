@@ -227,6 +227,30 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
+	     * Returns true if two passed slider value are equal.
+	     * @param {number[]|undefined} val_1 - slider value. Can be array of 2 numbers of undefined.
+	     * @param {number[]|undefined} val_2 - same as val_1
+	     * @return {boolean}
+	     * @private
+	     */
+
+	  }, {
+	    key: '_valuesAreEqual',
+	    value: function _valuesAreEqual(val_1, val_2) {
+	      // both of values are undefined
+	      if (val_1 === val_2) return true;
+
+	      // one of values is undefined
+	      if (typeof val_1 === 'undefined' || typeof val_2 === 'undefined') {
+	        return false;
+	      }
+
+	      if (!Array.isArray(val_1) || !Array.isArray(val_2)) throw new Error(this.name + ' error: type of passed value is not supported. It must be array of two numbers.');
+
+	      return val_1[0] === val_2[0] && val_1[1] === val_2[1];
+	    }
+
+	    /**
 	     *
 	     * @param {SliderSettings} settings
 	     */
@@ -357,14 +381,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: '_addKeyboardListeners',
 	    value: function _addKeyboardListeners() {
 	      var self = this;
+	      var eventsData = {
+	        startValue: null,
+	        startChangeEmitted: null
+	      };
 
-	      this._minHandleElement.addEventListener('keydown', onkeydown);
-	      this._maxHandleElement.addEventListener('keydown', onkeydown);
+	      this._minHandleElement.addEventListener('keydown', onKeyDown);
+	      this._maxHandleElement.addEventListener('keydown', onKeyDown);
 
-	      function onkeydown(e) {
-	        var isMaxHandle = _cgComponentUtils2.default.hasClass(this, MAX_HANDLE_CLASS);
+	      function onKeyDown(e) {
+	        var currentHandle = this;
+	        var isMaxHandle = _cgComponentUtils2.default.hasClass(currentHandle, MAX_HANDLE_CLASS);
 	        var newVal = void 0;
 	        var change = void 0;
+
+	        if (eventsData.startValue === null) {
+	          eventsData.startValue = self._value;
+	        }
 
 	        switch ((0, _keycode2.default)(e)) {
 	          // min value
@@ -405,11 +438,34 @@ return /******/ (function(modules) { // webpackBootstrap
 	          return;
 	        }
 
-	        //todo: emit start and stop change events
+	        // emit start change event if value will be changed
+	        if (!eventsData.startChangeEmitted && !self.constructor._valuesAreEqual(eventsData.startValue, self._prepareValueToSet(newVal))) {
+	          eventsData.startChangeEmitted = true;
+	          self.emit(self.constructor.EVENTS.START_CHANGE, self.value);
+	          currentHandle.addEventListener('keyup', onKeyboardChangeStop);
+	          currentHandle.addEventListener('blur', onKeyboardChangeStop);
+	        }
+
 	        self._setValue(newVal);
 
 	        e.preventDefault();
 	        e.stopPropagation();
+	      }
+
+	      function onKeyboardChangeStop(e) {
+	        this.removeEventListener('keyup', onKeyboardChangeStop);
+	        this.removeEventListener('blur', onKeyboardChangeStop);
+
+	        if (eventsData.startChangeEmitted) {
+	          self.emit(self.constructor.EVENTS.STOP_CHANGE, self.value);
+	        }
+
+	        // clear eventsData
+	        for (var key in eventsData) {
+	          if (eventsData.hasOwnProperty(key)) {
+	            eventsData[key] = null;
+	          }
+	        }
 	      }
 	    }
 
@@ -422,22 +478,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: '_makeDraggable',
 	    value: function _makeDraggable() {
 	      var self = this;
-	      this._minHandleElement.addEventListener('mousedown', onmousedown);
-	      this._minHandleElement.addEventListener('touchstart', onmousedown);
-	      this._maxHandleElement.addEventListener('mousedown', onmousedown);
-	      this._maxHandleElement.addEventListener('touchstart', onmousedown);
+	      this._minHandleElement.addEventListener('mousedown', onMouseDown);
+	      this._minHandleElement.addEventListener('touchstart', onMouseDown);
+	      this._maxHandleElement.addEventListener('mousedown', onMouseDown);
+	      this._maxHandleElement.addEventListener('touchstart', onMouseDown);
 
 	      var dragData = {
+	        startValue: null,
 	        startHandlePos: null,
 	        startMousePos: null,
 	        dragHandle: null,
-	        containerWidth: null
+	        containerWidth: null,
+	        startChangeEmitted: null
 	      };
 
 	      //todo: move handlers to prototype
-	      function onmousedown(e) {
+	      function onMouseDown(e) {
 	        _cgComponentUtils2.default.extendEventObject(e);
 
+	        dragData.startValue = self._value;
 	        dragData.dragHandle = this;
 	        dragData.isMaxHandle = _cgComponentUtils2.default.hasClass(dragData.dragHandle, MAX_HANDLE_CLASS);
 	        dragData.containerWidth = self._handlesContainer.getBoundingClientRect().width;
@@ -447,31 +506,41 @@ return /******/ (function(modules) { // webpackBootstrap
 	          y: e.py
 	        };
 
-	        document.addEventListener('mousemove', onmousemove);
-	        document.addEventListener('touchmove', onmousemove);
-	        document.addEventListener('mouseup', onmouseup);
-	        document.addEventListener('touchend', onmouseup);
+	        document.addEventListener('mousemove', onMouseMove);
+	        document.addEventListener('touchmove', onMouseMove);
+	        document.addEventListener('mouseup', onMouseUp);
+	        document.addEventListener('touchend', onMouseUp);
 	      }
 
-	      function onmousemove(e) {
+	      function onMouseMove(e) {
 	        _cgComponentUtils2.default.extendEventObject(e);
 
 	        var percent = _helpFuncs2.default.getPercent(dragData.startHandlePos.x + e.px - dragData.startMousePos.x, dragData.containerWidth);
 	        var value = _helpFuncs2.default.calcValueByPercent(percent, self.max, self.min);
 
-	        value = dragData.isMaxHandle ? value : [value, self.value[1]];
+	        value = dragData.isMaxHandle ? value : [value, self._value[1]];
+
+	        // emit start change event if value will be changed
+	        if (!dragData.startChangeEmitted && !self.constructor._valuesAreEqual(dragData.startValue, self._prepareValueToSet(value))) {
+	          dragData.startChangeEmitted = true;
+	          self.emit(self.constructor.EVENTS.START_CHANGE, self.value);
+	        }
+
 	        self._setValue(value);
-	        //todo: emit start change event
 
 	        e.preventDefault();
 	      }
 
-	      function onmouseup(e) {
+	      function onMouseUp(e) {
 	        _cgComponentUtils2.default.extendEventObject(e);
-	        document.removeEventListener('mousemove', onmousemove);
-	        document.removeEventListener('touchmove', onmousemove);
-	        document.removeEventListener('mouseup', onmouseup);
-	        document.removeEventListener('touchend', onmouseup);
+	        document.removeEventListener('mousemove', onMouseMove);
+	        document.removeEventListener('touchmove', onMouseMove);
+	        document.removeEventListener('mouseup', onMouseUp);
+	        document.removeEventListener('touchend', onMouseUp);
+
+	        if (dragData.startChangeEmitted) {
+	          self.emit(self.constructor.EVENTS.STOP_CHANGE, self.value);
+	        }
 
 	        // clear dragData
 	        for (var key in dragData) {
@@ -479,7 +548,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	            dragData[key] = null;
 	          }
 	        }
-	        //todo: emit stop change event
 
 	        e.preventDefault();
 	      }
@@ -593,22 +661,17 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
-	     * Sets slider value.
-	     * @param {number|Array} val - New value.
-	     * @param {boolean} [force=false] - If `true` will set value with emitting CHANGE event even value is not changed.
+	     * Fixes passed value according to current settings.
+	     * @param {number|number[]} val
+	     * @return {number[]}
 	     * @private
 	     */
 
 	  }, {
-	    key: '_setValue',
-	    value: function _setValue(val) {
-	      var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
-
-	      if (typeof val !== 'number' && !Array.isArray(val)) {
-	        throw new Error(this.constructor.name + ' set value error: passed value\'s (' + val + ') type is not supported.');
-	      }
-
+	    key: '_prepareValueToSet',
+	    value: function _prepareValueToSet(val) {
 	      // for not range slider value can be number
+	      // so it should be converted to array
 	      if (typeof val === 'number') {
 	        var minVal = this._value && this._value[0] || this.min;
 	        val = [minVal, val];
@@ -622,7 +685,28 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      val = _helpFuncs2.default.fixValue(val, this.min, this.max, this.step, !this.isRange, isMaxChanged);
 
-	      var valueChanged = typeof this._value === 'undefined' || this._value[0] !== val[0] || this._value[1] !== val[1];
+	      return val;
+	    }
+
+	    /**
+	     * Sets slider value.
+	     * @param {number|number[]} val - New value.
+	     * @param {boolean} [force=false] - If `true` will set value with emitting CHANGE event even value is not changed.
+	     * @private
+	     */
+
+	  }, {
+	    key: '_setValue',
+	    value: function _setValue(val) {
+	      var force = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+	      if (typeof val !== 'number' && !Array.isArray(val)) {
+	        throw new Error(this.constructor.name + ' set value error: passed value\'s (' + val + ') type is not supported.');
+	      }
+
+	      val = this._prepareValueToSet(val);
+
+	      var valueChanged = !this.constructor._valuesAreEqual(this._value, val);
 
 	      this._value = val;
 

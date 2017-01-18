@@ -11,6 +11,8 @@
             font-family: 'Roboto Slab', sans-serif;
             margin: 0;
             padding: 0.5rem;
+            color: #333333;
+            background-color: #fafafa;
         }
 
         .component-header {
@@ -27,13 +29,17 @@
         .component-block {
             display: inline-block;
             width: 100%;
-            margin-bottom: 10px;
+            margin-bottom: 20px;
             vertical-align: top;
         }
 
         .cg-slider {
             margin-top: 10px;
             margin-bottom: 10px;
+        }
+
+        .component-sample-header {
+            margin-bottom: 5px;
         }
 
         @media (min-width: 768px) {
@@ -71,6 +77,14 @@
             font-size: 1.2rem;
             color: #fff;
         }
+
+        #events_log {
+            background-color: #fff;
+            border: 1px solid #e5e5e5;
+            padding: 1em;
+            height: 200px;
+            overflow: auto;
+        }
     </style>
 </head>
 <body role="application">
@@ -86,32 +100,19 @@
 
 --><div class="component-block">
     <div class="component-sample-header slider-margined" aria-hidden="true">Range Slider</div>
-    <div id="range-slider"></div>
+    <div id="range_slider"></div>
+</div><!--
+
+--><div class="component-block">
+    <div class="component-sample-header slider-margined" aria-hidden="true">Slider Events</div>
+    <div id="events_slider"></div>
+    <div class="component-sample-header slider-margined" aria-hidden="true">Events log:</div>
+    <div id="events_log" class="slider-margined"></div>
 </div>
 
-<script type="text/javascript">
-  var valueElement = document.getElementById('sliderValue');
-  var slider = new CgSlider({
-    container: 'slider',
-    initialValue: 50,
-    ariaLabel: 'slider'
-  });
-  var rangeSlider = new CgSlider({
-    container: 'range-slider',
-    isRange: true,
-    initialValue: [25, 75]
-  });
+<script type="text/javascript" src="examples/simple.js"></script>
+<script type="text/javascript" src="examples/range.js"></script>
+<script type="text/javascript" src="examples/events.js"></script>
 
-  slider.on(CgSlider.EVENTS.CHANGE, function (value) {
-//    console.log('changed to:', value);
-    updateSimpleValue();
-  });
-  updateSimpleValue();
-
-  function updateSimpleValue() {
-    valueElement.innerHTML = slider.value;
-  }
-
-</script>
 </body>
 </html>
