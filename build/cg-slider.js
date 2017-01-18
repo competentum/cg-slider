@@ -422,9 +422,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	    key: '_makeDraggable',
 	    value: function _makeDraggable() {
 	      var self = this;
-	      //todo: touch events
 	      this._minHandleElement.addEventListener('mousedown', onmousedown);
+	      this._minHandleElement.addEventListener('touchstart', onmousedown);
 	      this._maxHandleElement.addEventListener('mousedown', onmousedown);
+	      this._maxHandleElement.addEventListener('touchstart', onmousedown);
 
 	      var dragData = {
 	        startHandlePos: null,
@@ -447,7 +448,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        };
 
 	        document.addEventListener('mousemove', onmousemove);
+	        document.addEventListener('touchmove', onmousemove);
 	        document.addEventListener('mouseup', onmouseup);
+	        document.addEventListener('touchend', onmouseup);
 	      }
 
 	      function onmousemove(e) {
@@ -466,7 +469,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      function onmouseup(e) {
 	        _cgComponentUtils2.default.extendEventObject(e);
 	        document.removeEventListener('mousemove', onmousemove);
+	        document.removeEventListener('touchmove', onmousemove);
 	        document.removeEventListener('mouseup', onmouseup);
+	        document.removeEventListener('touchend', onmouseup);
 
 	        // clear dragData
 	        for (var key in dragData) {

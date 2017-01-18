@@ -471,9 +471,10 @@ class CgSlider extends EventEmitter {
    */
   _makeDraggable() {
     const self = this;
-    //todo: touch events
     this._minHandleElement.addEventListener('mousedown', onmousedown);
+    this._minHandleElement.addEventListener('touchstart', onmousedown);
     this._maxHandleElement.addEventListener('mousedown', onmousedown);
+    this._maxHandleElement.addEventListener('touchstart', onmousedown);
 
     let dragData = {
       startHandlePos: null,
@@ -496,7 +497,9 @@ class CgSlider extends EventEmitter {
       };
 
       document.addEventListener('mousemove', onmousemove);
+      document.addEventListener('touchmove', onmousemove);
       document.addEventListener('mouseup', onmouseup);
+      document.addEventListener('touchend', onmouseup);
     }
 
     function onmousemove(e) {
@@ -515,7 +518,9 @@ class CgSlider extends EventEmitter {
     function onmouseup(e) {
       utils.extendEventObject(e);
       document.removeEventListener('mousemove', onmousemove);
+      document.removeEventListener('touchmove', onmousemove);
       document.removeEventListener('mouseup', onmouseup);
+      document.removeEventListener('touchend', onmouseup);
 
       // clear dragData
       for (let key in dragData) {
