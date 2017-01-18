@@ -164,7 +164,7 @@ class CgSlider extends EventEmitter {
       return false;
     }
 
-    if(!Array.isArray(val_1) || !Array.isArray(val_2))
+    if (!Array.isArray(val_1) || !Array.isArray(val_2))
       throw new Error(`${this.name} error: type of passed value is not supported. It must be array of two numbers.`);
 
     return val_1[0] === val_2[0]
@@ -484,6 +484,10 @@ class CgSlider extends EventEmitter {
           change = LARGE_CHANGE_MULTIPLIER * self.step;
           newVal = isMaxHandle ? self._value[1] - change : [self._value[0] - change, self._value[1]];
           break;
+
+        default:
+          // not supported keys
+          return;
       }
       if (typeof newVal === 'undefined'
           || isNaN(newVal)

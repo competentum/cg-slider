@@ -433,6 +433,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	            change = LARGE_CHANGE_MULTIPLIER * self.step;
 	            newVal = isMaxHandle ? self._value[1] - change : [self._value[0] - change, self._value[1]];
 	            break;
+
+	          default:
+	            // not supported keys
+	            return;
 	        }
 	        if (typeof newVal === 'undefined' || isNaN(newVal) && (isNaN(newVal[0]) || isNaN(newVal[1]))) {
 	          return;
@@ -452,7 +456,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        e.stopPropagation();
 	      }
 
-	      function onKeyboardChangeStop(e) {
+	      function onKeyboardChangeStop() {
 	        this.removeEventListener('keyup', onKeyboardChangeStop);
 	        this.removeEventListener('blur', onKeyboardChangeStop);
 
