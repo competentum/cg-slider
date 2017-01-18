@@ -10,7 +10,7 @@
         body {
             font-family: 'Roboto Slab', sans-serif;
             margin: 0;
-            padding: 1rem 1.5rem;
+            padding: 0.5rem;
         }
 
         .component-header {
@@ -31,15 +31,25 @@
             vertical-align: top;
         }
 
-        @media (min-width: 1024px) {
-            .component-block {
-                width: 50%;
-            }
-        }
-
         .cg-slider {
             margin-top: 10px;
             margin-bottom: 10px;
+        }
+
+        @media (min-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+        }
+
+        @media (min-width: 1024px) {
+            body {
+                padding: 1.5rem 2rem;
+            }
+
+            .component-block {
+                width: 50%;
+            }
         }
 
         #slider, #sliderValue {
