@@ -14,6 +14,7 @@ import helpFuncs from './help-funcs';
  * @property {Element|string} container - DOM Element or element id in which slider should be rendered.
  *                                        This property can be omitted. In this case new DOM element will be created and can be accessed via `sliderInstance.container`
  * @property {number|number[]} initialValue - Value which will be set on initialization.
+ * @property {boolean} disabled - If true slider will be non-interactive.
  * @property {boolean} isRange - If true two sliders will be added to set range.
  * @property {number} min - Minimum slider value.
  * @property {number} max - Maximum slider value.
@@ -46,6 +47,7 @@ class CgSlider extends EventEmitter {
    * @type SliderSettings
    */
   static DEFAULT_SETTINGS = {
+    disabled: false,
     initialValue: null,
     isRange: false,
     min: 0,
@@ -71,6 +73,9 @@ class CgSlider extends EventEmitter {
     const constructor = this; // without this declaration IDE will highlight static variables as error
 
     switch (name) {
+      case 'disabled':
+        setting = !!setting;
+        break;
       case 'tabindex':
         if (typeof setting === 'number') {
           setting = [setting, setting];
@@ -244,6 +249,22 @@ class CgSlider extends EventEmitter {
    *
    * @returns {boolean}
    */
+  get disabled() {
+    return this.getSetting('disabled');
+  }
+
+  /**
+   *
+   * @param {boolean} val
+   */
+  set disabled(val) {
+    this.setSetting('disabled', val);
+  }
+
+  /**
+   *
+   * @returns {boolean}
+   */
   get isRange() {
     return this.getSetting('isRange');
   }
@@ -346,6 +367,7 @@ class CgSlider extends EventEmitter {
    */
   getSetting(name) {
     switch (name) {
+      case 'disabled':
       case 'min':
       case 'max':
       case 'step':
@@ -372,6 +394,11 @@ class CgSlider extends EventEmitter {
     val = this.constructor._fixSetting(name, val);
 
     switch (name) {
+      case 'disabled':
+        this._settings.disabled = val;
+        this._updateDisabled();
+        break;
+
       case 'min':
       case 'max':
       case 'step':
@@ -441,6 +468,9 @@ class CgSlider extends EventEmitter {
     this._maxHandleElement.addEventListener('keydown', onKeyDown);
 
     function onKeyDown(e) {
+      if (self.disabled)
+        return;
+
       const currentHandle = this;
       const isMaxHandle = utils.hasClass(currentHandle, MAX_HANDLE_CLASS);
       let newVal;
@@ -549,6 +579,9 @@ class CgSlider extends EventEmitter {
 
     //todo: move handlers to prototype
     function onMouseDown(e) {
+      if (self.disabled)
+        return;
+
       utils.extendEventObject(e);
 
       dragData.startValue = self._value;
@@ -678,6 +711,7 @@ class CgSlider extends EventEmitter {
 
     this._updateAriaLimits();
     this._updateAriaLabels();
+    this._updateDisabled();
 
     this.container.appendChild(this._rootElement);
   }
@@ -717,6 +751,22 @@ class CgSlider extends EventEmitter {
 
     maxHandle.setAttribute('aria-valuemin', this.min);
     maxHandle.setAttribute('aria-valuemax', this.max);
+  }
+
+  _updateDisabled() {
+    if (!this._rootElement)
+      return;
+
+    if (this._settings.disabled) {
+      this._rootElement.setAttribute('disabled', 'true');
+      this._minHandleElement.setAttribute('tabindex', '-1');
+      this._maxHandleElement.setAttribute('tabindex', '-1');
+    }
+    else {
+      this._rootElement.removeAttribute('disabled');
+      // restore tabindex
+      this.tabindex = this.tabindex;
+    }
   }
 
   /**

@@ -108,6 +108,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {Element|string} container - DOM Element or element id in which slider should be rendered.
 	 *                                        This property can be omitted. In this case new DOM element will be created and can be accessed via `sliderInstance.container`
 	 * @property {number|number[]} initialValue - Value which will be set on initialization.
+	 * @property {boolean} disabled - If true slider will be non-interactive.
 	 * @property {boolean} isRange - If true two sliders will be added to set range.
 	 * @property {number} min - Minimum slider value.
 	 * @property {number} max - Maximum slider value.
@@ -148,6 +149,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	      var constructor = this; // without this declaration IDE will highlight static variables as error
 
 	      switch (name) {
+	        case 'disabled':
+	          setting = !!setting;
+	          break;
 	        case 'tabindex':
 	          if (typeof setting === 'number') {
 	            setting = [setting, setting];
@@ -286,6 +290,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    value: function getSetting(name) {
 	      switch (name) {
+	        case 'disabled':
 	        case 'min':
 	        case 'max':
 	        case 'step':
@@ -315,6 +320,11 @@ return /******/ (function(modules) { // webpackBootstrap
 	      val = this.constructor._fixSetting(name, val);
 
 	      switch (name) {
+	        case 'disabled':
+	          this._settings.disabled = val;
+	          this._updateDisabled();
+	          break;
+
 	        case 'min':
 	        case 'max':
 	        case 'step':
@@ -390,6 +400,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this._maxHandleElement.addEventListener('keydown', onKeyDown);
 
 	      function onKeyDown(e) {
+	        if (self.disabled) return;
+
 	        var currentHandle = this;
 	        var isMaxHandle = _cgComponentUtils2.default.hasClass(currentHandle, MAX_HANDLE_CLASS);
 	        var newVal = void 0;
@@ -498,6 +510,8 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      //todo: move handlers to prototype
 	      function onMouseDown(e) {
+	        if (self.disabled) return;
+
 	        _cgComponentUtils2.default.extendEventObject(e);
 
 	        dragData.startValue = self._value;
@@ -621,6 +635,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      this._updateAriaLimits();
 	      this._updateAriaLabels();
+	      this._updateDisabled();
 
 	      this.container.appendChild(this._rootElement);
 	    }
@@ -662,6 +677,21 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	      maxHandle.setAttribute('aria-valuemin', this.min);
 	      maxHandle.setAttribute('aria-valuemax', this.max);
+	    }
+	  }, {
+	    key: '_updateDisabled',
+	    value: function _updateDisabled() {
+	      if (!this._rootElement) return;
+
+	      if (this._settings.disabled) {
+	        this._rootElement.setAttribute('disabled', 'true');
+	        this._minHandleElement.setAttribute('tabindex', '-1');
+	        this._maxHandleElement.setAttribute('tabindex', '-1');
+	      } else {
+	        this._rootElement.removeAttribute('disabled');
+	        // restore tabindex
+	        this.tabindex = this.tabindex;
+	      }
 	    }
 
 	    /**
@@ -799,6 +829,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 
 	  }, {
+	    key: 'disabled',
+	    get: function get() {
+	      return this.getSetting('disabled');
+	    }
+
+	    /**
+	     *
+	     * @param {boolean} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this.setSetting('disabled', val);
+	    }
+
+	    /**
+	     *
+	     * @returns {boolean}
+	     */
+
+	  }, {
 	    key: 'isRange',
 	    get: function get() {
 	      return this.getSetting('isRange');
@@ -923,6 +973,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	}(_events2.default);
 
 	CgSlider.DEFAULT_SETTINGS = {
+	  disabled: false,
 	  initialValue: null,
 	  isRange: false,
 	  min: 0,
@@ -977,7 +1028,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	// module
-	exports.push([module.id, ".cg-slider {\n  padding: 10px 13px;\n  position: relative;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  box-sizing: border-box;\n}\n.cg-slider .cg-slider-bg {\n  height: 6px;\n  background: #aaaaaa;\n  position: relative;\n}\n.cg-slider .cg-slider-progress {\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle {\n  top: 50%;\n  left: 0;\n  border-radius: 50%;\n  position: absolute;\n  height: 18px;\n  width: 18px;\n  background: #17AC5B;\n  cursor: pointer;\n  margin-left: -9px;\n  margin-top: -9px;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:after {\n  content: \"\";\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  top: 0;\n  border-radius: 50%;\n}\n.cg-slider .cg-slider-handle:after {\n  transition: left 0.3s, right 0.3s, bottom 0.3s, top 0.3s;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  left: -4px;\n  right: -4px;\n  bottom: -4px;\n  top: -4px;\n}\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle:focus {\n  outline: none;\n}\n.cg-slider .cg-slider-handle:focus:before {\n  background-color: rgba(23, 172, 91, 0.4);\n}\n.cg-slider .cg-slider-handle-min {\n  display: none;\n}\n.cg-slider.cg-slider-range .cg-slider-handle-min {\n  display: block;\n}\n", ""]);
+	exports.push([module.id, ".cg-slider {\n  padding: 10px 13px;\n  position: relative;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  box-sizing: border-box;\n}\n.cg-slider .cg-slider-bg {\n  height: 6px;\n  background: #aaaaaa;\n  position: relative;\n}\n.cg-slider .cg-slider-progress {\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle {\n  top: 50%;\n  left: 0;\n  border-radius: 50%;\n  position: absolute;\n  height: 18px;\n  width: 18px;\n  background: #17AC5B;\n  cursor: pointer;\n  margin-left: -9px;\n  margin-top: -9px;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:after {\n  content: \"\";\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  top: 0;\n  border-radius: 50%;\n}\n.cg-slider .cg-slider-handle:after {\n  transition: left 0.3s, right 0.3s, bottom 0.3s, top 0.3s;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  left: -4px;\n  right: -4px;\n  bottom: -4px;\n  top: -4px;\n}\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle:focus {\n  outline: none;\n}\n.cg-slider .cg-slider-handle:focus:before {\n  background-color: rgba(23, 172, 91, 0.4);\n}\n.cg-slider .cg-slider-handle-min {\n  display: none;\n}\n.cg-slider.cg-slider-range .cg-slider-handle-min {\n  display: block;\n}\n.cg-slider[disabled=true] {\n  opacity: 0.6;\n}\n.cg-slider[disabled=true] .cg-slider-handle {\n  cursor: auto;\n}\n.cg-slider[disabled=true] .cg-slider-handle:before,\n.cg-slider[disabled=true] .cg-slider-handle:after {\n  display: none;\n}\n", ""]);
 
 	// exports
 

@@ -86,3 +86,16 @@
     }
   }
 }
+
+.cg-slider[disabled=true] {
+  opacity: 0.6;
+
+  .cg-slider-handle {
+    cursor: auto;
+
+    &:before,
+    &:after {
+      display: none;
+    }
+  }
+}
