@@ -44,7 +44,7 @@ See [slider.on](#method_on) method to know how to use events.
     This property can be omitted. In this case new DOM element will be created and can be accessed via `sliderInstance.container`
     - `disabled` *{boolean}* Disables the slider if set to true. Default: `false`.
     - `initialValue` *{number | number[]}* Value which will be set on initialization. 
-    If this property is not defined minimum value will ve set initially. 
+    If this property is not defined minimum value will be set initially. 
     For the range slider value must be array of two numbers. 
     - `isRange` *{boolean}* Whether the slider represents a range.
     If set to true, the slider will detect if you have two handles and create a styleable range element between these two. 
