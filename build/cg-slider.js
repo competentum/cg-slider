@@ -105,21 +105,23 @@ return /******/ (function(modules) { // webpackBootstrap
 	/**
 	 * Slider's customizing settings
 	 * @typedef {Object} SliderSettings
-	 * @property {Element|string} container - DOM Element or element id in which slider should be rendered.
+	 * @property {Element|string} container - DOM Element or element id in which slider instance should be rendered.
 	 *                                        This property can be omitted. In this case new DOM element will be created and can be accessed via `sliderInstance.container`
 	 * @property {number|number[]} initialValue - Value which will be set on initialization.
-	 * @property {boolean} disabled - If true slider will be non-interactive.
-	 * @property {boolean} isRange - If true two sliders will be added to set range.
-	 * @property {number} min - Minimum slider value.
-	 * @property {number} max - Maximum slider value.
-	 * @property {number} step
-	 * @property {number|number[]} tabindex - tabindex of handle element. It can be array of two numbers for range slider.
-	 * @property {string|string[]} ariaLabel - string that labels the current slider for screen readers. It can be array of two strings for range slider.
+	 * @property {boolean} disabled - Disables the slider if set to true.
+	 * @property {boolean} isRange - Whether the slider represents a range.
+	 *                               If set to true, the slider will detect if you have two handles and create a styleable range element between these two.
+	 * @property {number} min - The minimum value of the slider.
+	 * @property {number} max - The maximum value of the slider.
+	 * @property {number} step - Determines the size or amount of each interval or step the slider takes between the min and max.
+	 *                           The full specified value range of the slider (max - min) should be evenly divisible by the step.
+	 * @property {number|number[]} tabindex - Tabindex of handle element. It can be array of two numbers for the range slider.
+	 * @property {string|string[]} ariaLabel - String that labels the current slider for screen readers. It can be array of two strings the for range slider.
 	 *                                         For more info see [WAI-ARIA specification/#aria-label]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-label}.
-	 * @property {string|string[]} ariaLabelledBy - id of the element that labels the current slider. It can be array of two strings for range slider.
+	 * @property {string|string[]} ariaLabelledBy - Id of the element that labels the current slider. It can be array of two strings for the range slider.
 	 *                                             This property has higher priority than `ariaLabel`.
 	 *                                             For more info see [WAI-ARIA specification/#aria-labelledby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-labelledby}.
-	 * @property {string|string[]} ariaDescribedBy - id of the element that describes the current slider. It can be array of two strings for range slider.
+	 * @property {string|string[]} ariaDescribedBy - Id of the element that describes the current slider. It can be array of two strings for the range slider.
 	 *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
 	 *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
 	 */
@@ -284,7 +286,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	    /**
-	     * Returns value of specified setting.
+	     * Returns value of the specified setting.
 	     * @param {string} name - setting name.
 	     * @returns {*}
 	     */
@@ -339,6 +341,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          //todo: redraw ticks
 	          break;
 
+	        //todo: remove this setting from this method to make it readable only.
 	        case 'isRange':
 	          this._settings.isRange = !!val;
 	          //todo: redraw handles
@@ -1009,8 +1012,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less", function() {
-				var newContent = require("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less");
+			module.hot.accept("!!../node_modules/css-loader/index.js!../node_modules/postcss-loader/index.js!../node_modules/less-loader/index.js!./common.less", function() {
+				var newContent = require("!!../node_modules/css-loader/index.js!../node_modules/postcss-loader/index.js!../node_modules/less-loader/index.js!./common.less");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -1106,7 +1109,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			};
 		},
 		isOldIE = memoize(function() {
-			return /msie [6-9]\b/.test(window.navigator.userAgent.toLowerCase());
+			return /msie [6-9]\b/.test(self.navigator.userAgent.toLowerCase());
 		}),
 		getHeadElement = memoize(function () {
 			return document.head || document.getElementsByTagName("head")[0];

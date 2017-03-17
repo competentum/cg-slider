@@ -25,10 +25,6 @@ module.exports = {
         "afterColon": true
       }
     ],
-    "linebreak-style": [
-      "error",
-      "windows"
-    ],
     "quotes": [
       "error",
       "single"
