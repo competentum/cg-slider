@@ -155,7 +155,7 @@ class CgSlider extends EventEmitter {
 
   /**
    * Returns true if two passed slider value are equal.
-   * @param {number[]|undefined} val_1 - slider value. Can be array of 2 numbers of undefined.
+   * @param {number[]|undefined} val_1 - slider value. Can be array of 2 numbers or undefined.
    * @param {number[]|undefined} val_2 - same as val_1
    * @return {boolean}
    * @private
@@ -408,7 +408,7 @@ class CgSlider extends EventEmitter {
 
         if (this._value) {
           // reset value to apply it with new limits and step
-          this._setValue(this.value);
+          this._setValue(this.value, true);
         }
 
         this._updateAriaLimits();
