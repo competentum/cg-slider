@@ -1,5 +1,5 @@
 /*!
- * cg-slider v0.1.2 - Accessible Slider Component
+ * cg-slider v0.1.3 - Accessible Slider Component
  * 
  * (c) 2015-2017 Competentum Group | http://competentum.com
  * Released under the MIT license
@@ -234,7 +234,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    /**
 	     * Returns true if two passed slider value are equal.
-	     * @param {number[]|undefined} val_1 - slider value. Can be array of 2 numbers of undefined.
+	     * @param {number[]|undefined} val_1 - slider value. Can be array of 2 numbers or undefined.
 	     * @param {number[]|undefined} val_2 - same as val_1
 	     * @return {boolean}
 	     * @private
@@ -334,7 +334,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	          if (this._value) {
 	            // reset value to apply it with new limits and step
-	            this._setValue(this.value);
+	            this._setValue(this.value, true);
 	          }
 
 	          this._updateAriaLimits();
@@ -1012,8 +1012,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!../node_modules/css-loader/index.js!../node_modules/postcss-loader/index.js!../node_modules/less-loader/index.js!./common.less", function() {
-				var newContent = require("!!../node_modules/css-loader/index.js!../node_modules/postcss-loader/index.js!../node_modules/less-loader/index.js!./common.less");
+			module.hot.accept("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less", function() {
+				var newContent = require("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -1109,7 +1109,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			};
 		},
 		isOldIE = memoize(function() {
-			return /msie [6-9]\b/.test(self.navigator.userAgent.toLowerCase());
+			return /msie [6-9]\b/.test(window.navigator.userAgent.toLowerCase());
 		}),
 		getHeadElement = memoize(function () {
 			return document.head || document.getElementsByTagName("head")[0];
