@@ -124,8 +124,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {string|string[]} ariaDescribedBy - Id of the element that describes the current slider. It can be array of two strings for the range slider.
 	 *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
 	 *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
-	 * @property {string[]} ariaValuetext - Array of labels for screen readers. Label order (indices) should be the same as the order of values (indices) in the range array.
-	 *                                      For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
+	 * @property {function(number):string} ariaValuetext - Label formatter callback. It receives value as a parameter and should return corresponding label.
+	 *                                                     For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
 	 */
 
 	var SLIDER_CLASS = 'cg-slider';
@@ -187,6 +187,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	          } else {
 	            throw new Error(this.name + ' error: type of passed setting \'' + name + '\' is not supported.');
+	          }
+	          break;
+
+	        case 'ariaValuetext':
+	          if (typeof setting !== 'function') {
+	            throw new Error(this.name + ' error: type of passed setting \'' + name + '\' must be a function.');
 	          }
 	          break;
 
@@ -696,10 +702,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: '_updateValueTexts',
 	    value: function _updateValueTexts(valMin, valMax) {
-	      var minIndex = _helpFuncs2.default.getValueIndex(valMin, this.min, this.step);
-	      var maxIndex = _helpFuncs2.default.getValueIndex(valMax, this.min, this.step);
-	      var minValueText = this.ariaValuetext[minIndex] || valMin;
-	      var maxValueText = this.ariaValuetext[maxIndex] || valMax;
+	      var minValueText = this.ariaValuetext.call(this, valMin);
+	      var maxValueText = this.ariaValuetext.call(this, valMax);
 	      this._minHandleElement.setAttribute('aria-valuetext', minValueText);
 	      this._maxHandleElement.setAttribute('aria-valuetext', maxValueText);
 	    }
@@ -842,7 +846,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    /**
 	     * 
-	     * @returns {string[]}
+	     * @returns {function}
 	     */
 
 	  }, {
@@ -853,7 +857,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    /**
 	     * 
-	     * @param {string[]}
+	     * @param {function(number):string} val
 	     */
 	    ,
 	    set: function set(val) {
@@ -1031,7 +1035,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  ariaLabel: '',
 	  ariaLabelledBy: '',
 	  ariaDescribedBy: '',
-	  ariaValuetext: []
+	  ariaValuetext: function ariaValuetext(val) {
+	    return +val;
+	  }
 	};
 	CgSlider.EVENTS = {
 	  CHANGE: 'change',
@@ -2264,18 +2270,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	    var min = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : 0;
 
 	    return Math.min(100, Math.max(0, 100 * (val - min) / (max - min)));
-	  },
-
-	  /**
-	   * Get absolute index in range by value
-	   * @param {number} val
-	   * @param {number} min
-	   * @param {number} [step = 1]
-	   * @returns {number}
-	   */
-	  getValueIndex: function getIndex(val, min, step) {
-	    step = step || 1;
-	    return Math.round(Math.abs(min - val) / step);
 	  },
 
 	  /**

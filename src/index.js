@@ -30,8 +30,8 @@ import helpFuncs from './help-funcs';
  * @property {string|string[]} ariaDescribedBy - Id of the element that describes the current slider. It can be array of two strings for the range slider.
  *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
  *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
- * @property {string[]} ariaValuetext - Array of labels for screen readers. Label order (indices) should be the same as the order of values (indices) in the range array.
- *                                      For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
+ * @property {function(number):string} ariaValuetext - Label formatter callback. It receives value as a parameter and should return corresponding label.
+ *                                                     For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
  */
 
 const SLIDER_CLASS = 'cg-slider';
@@ -61,7 +61,7 @@ class CgSlider extends EventEmitter {
     ariaLabel: '',
     ariaLabelledBy: '',
     ariaDescribedBy: '',
-    ariaValuetext: []
+    ariaValuetext: val => +val
   };
 
   /**
@@ -118,6 +118,12 @@ class CgSlider extends EventEmitter {
         }
         else {
           throw new Error(`${this.name} error: type of passed setting '${name}' is not supported.`);
+        }
+        break;
+      
+      case 'ariaValuetext':
+        if (typeof setting !== 'function') {
+          throw new Error(`${this.name} error: type of passed setting '${name}' must be a function.`);
         }
         break;
 
@@ -244,7 +250,7 @@ class CgSlider extends EventEmitter {
 
   /**
    * 
-   * @returns {string[]}
+   * @returns {function}
    */
   get ariaValuetext() {
     return this.getSetting('ariaValuetext');
@@ -252,7 +258,7 @@ class CgSlider extends EventEmitter {
 
   /**
    * 
-   * @param {string[]}
+   * @param {function(number):string} val
    */
   set ariaValuetext(val) {
     this.setSetting('ariaValuetext', val);
@@ -784,10 +790,8 @@ class CgSlider extends EventEmitter {
    * @param {number} valMax Max handle value
    */
   _updateValueTexts(valMin, valMax) {
-    const minIndex = helpFuncs.getValueIndex(valMin, this.min, this.step);
-    const maxIndex = helpFuncs.getValueIndex(valMax, this.min, this.step);
-    const minValueText = this.ariaValuetext[minIndex] || valMin;
-    const maxValueText = this.ariaValuetext[maxIndex] || valMax;
+    const minValueText = this.ariaValuetext.call(this, valMin);
+    const maxValueText = this.ariaValuetext.call(this, valMax);
     this._minHandleElement.setAttribute('aria-valuetext', minValueText);
     this._maxHandleElement.setAttribute('aria-valuetext', maxValueText);
   }

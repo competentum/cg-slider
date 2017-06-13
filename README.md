@@ -63,7 +63,7 @@ See [slider.on](#method_on) method to know how to use events.
     - `ariaDescribedBy` *{string | string[]}* Id of the element that describes the current slider. It can be array of two strings for the range slider.
     This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
     For more info see [WAI-ARIA specification/#aria-describedby](https://www.w3.org/TR/wai-aria-1.1/#aria-describedby).
-    - `ariaValuetext` *{string[]}* Array of labels for screen readers. Label order (indices) should be the same as the order of values (indices) in the range array.
+    - `ariaValuetext` *{function(number):string}* Label formatter callback. It receives value as a parameter and should return corresponding label.
     For more info see [WAI-ARIA specification/#aria-valuetext](https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext).
 
 ### Instance properties
@@ -83,8 +83,8 @@ Id of the element that describes the current slider. It can be array of two stri
 This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
 For more info see [WAI-ARIA specification/#aria-describedby](https://www.w3.org/TR/wai-aria-1.1/#aria-describedby).
 
-#### `.ariaValuetext` *{string[]}*
-Array of labels for screen readers. Label order (indices) should be the same as the order of values (indices) in the range array.
+#### `.ariaValuetext` *{function(number):string}*
+Label formatter callback. It receives value as a parameter and should return corresponding label.
 For more info see [WAI-ARIA specification/#aria-valuetext](https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext).
 
 #### `.container` *{Element}* (read only)
