@@ -124,8 +124,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {string|string[]} ariaDescribedBy - Id of the element that describes the current slider. It can be array of two strings for the range slider.
 	 *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
 	 *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
-	 * @property {function(number):string} ariaValuetext - Label formatter callback. It receives value as a parameter and should return corresponding label.
-	 *                                                     For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
+	 * @property {function(number):string} ariaValuetextFormatter - Label formatter callback. It receives value as a parameter and should return corresponding label.
+	 *                                                              For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
 	 */
 
 	var SLIDER_CLASS = 'cg-slider';
@@ -190,7 +190,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	          break;
 
-	        case 'ariaValuetext':
+	        case 'ariaValuetextFormatter':
 	          if (typeof setting !== 'function') {
 	            throw new Error(this.name + ' error: type of passed setting \'' + name + '\' must be a function.');
 	          }
@@ -305,7 +305,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'max':
 	        case 'step':
 	        case 'isRange':
-	        case 'ariaValuetext':
+	        case 'ariaValuetextFormatter':
 	          return this._settings[name];
 
 	        case 'tabindex':
@@ -339,7 +339,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'min':
 	        case 'max':
 	        case 'step':
-	        case 'ariaValuetext':
+	        case 'ariaValuetextFormatter':
 	          this._settings[name] = val;
 
 	          if (this._value) {
@@ -700,10 +700,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 
 	  }, {
-	    key: '_updateValueTexts',
-	    value: function _updateValueTexts(valMin, valMax) {
-	      var minValueText = this.ariaValuetext.call(this, valMin);
-	      var maxValueText = this.ariaValuetext.call(this, valMax);
+	    key: '_updateAriaValueTexts',
+	    value: function _updateAriaValueTexts(valMin, valMax) {
+	      var ariaValuetextFormatter = this._settings.ariaValuetextFormatter;
+
+	      var minValueText = ariaValuetextFormatter.call(this, valMin);
+	      var maxValueText = ariaValuetextFormatter.call(this, valMax);
 	      this._minHandleElement.setAttribute('aria-valuetext', minValueText);
 	      this._maxHandleElement.setAttribute('aria-valuetext', maxValueText);
 	    }
@@ -782,7 +784,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        this._minHandleElement.setAttribute('aria-valuenow', val[0]);
 	        this._maxHandleElement.setAttribute('aria-valuenow', val[1]);
 
-	        this._updateValueTexts(val[0], val[1]);
+	        this._updateAriaValueTexts(val[0], val[1]);
 
 	        this._progressElement.style.left = minPercentVal + '%';
 	        this._progressElement.style.width = maxPercentVal - minPercentVal + '%';
@@ -850,9 +852,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 
 	  }, {
-	    key: 'ariaValuetext',
+	    key: 'ariaValuetextFormatter',
 	    get: function get() {
-	      return this.getSetting('ariaValuetext');
+	      return this.getSetting('ariaValuetextFormatter');
 	    }
 
 	    /**
@@ -861,7 +863,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    ,
 	    set: function set(val) {
-	      this.setSetting('ariaValuetext', val);
+	      this.setSetting('ariaValuetextFormatter', val);
 	    }
 
 	    /**
@@ -1035,8 +1037,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  ariaLabel: '',
 	  ariaLabelledBy: '',
 	  ariaDescribedBy: '',
-	  ariaValuetext: function ariaValuetext(val) {
-	    return +val;
+	  ariaValuetextFormatter: function ariaValuetextFormatter(val) {
+	    return val.toString();
 	  }
 	};
 	CgSlider.EVENTS = {
