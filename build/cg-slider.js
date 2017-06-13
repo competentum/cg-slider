@@ -59,14 +59,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__(1);
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -124,6 +124,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {string|string[]} ariaDescribedBy - Id of the element that describes the current slider. It can be array of two strings for the range slider.
 	 *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
 	 *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
+	 * @property {string[]} ariaValuetext - Array of labels for screen readers. Label order (indices) should be the same as the order of values (indices) in the range array.
+	 *                                      For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
 	 */
 
 	var SLIDER_CLASS = 'cg-slider';
@@ -297,6 +299,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'max':
 	        case 'step':
 	        case 'isRange':
+	        case 'ariaValuetext':
 	          return this._settings[name];
 
 	        case 'tabindex':
@@ -330,6 +333,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'min':
 	        case 'max':
 	        case 'step':
+	        case 'ariaValuetext':
 	          this._settings[name] = val;
 
 	          if (this._value) {
@@ -681,6 +685,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	      maxHandle.setAttribute('aria-valuemin', this.min);
 	      maxHandle.setAttribute('aria-valuemax', this.max);
 	    }
+
+	    /**
+	     * Update aria-valuetext attributes for both handles
+	     * @private
+	     * @param {number} valMin Min handle value
+	     * @param {number} valMax Max handle value
+	     */
+
+	  }, {
+	    key: '_updateValueTexts',
+	    value: function _updateValueTexts(valMin, valMax) {
+	      var minIndex = _helpFuncs2.default.getValueIndex(valMin, this.min, this.step);
+	      var maxIndex = _helpFuncs2.default.getValueIndex(valMax, this.min, this.step);
+	      var minValueText = this.ariaValuetext[minIndex] || valMin;
+	      var maxValueText = this.ariaValuetext[maxIndex] || valMax;
+	      this._minHandleElement.setAttribute('aria-valuetext', minValueText);
+	      this._maxHandleElement.setAttribute('aria-valuetext', maxValueText);
+	    }
 	  }, {
 	    key: '_updateDisabled',
 	    value: function _updateDisabled() {
@@ -755,6 +777,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //todo: add aria-value formatter
 	        this._minHandleElement.setAttribute('aria-valuenow', val[0]);
 	        this._maxHandleElement.setAttribute('aria-valuenow', val[1]);
+
+	        this._updateValueTexts(val[0], val[1]);
+
 	        this._progressElement.style.left = minPercentVal + '%';
 	        this._progressElement.style.width = maxPercentVal - minPercentVal + '%';
 	        this.emit(this.constructor.EVENTS.CHANGE, this.value);
@@ -813,6 +838,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ,
 	    set: function set(val) {
 	      this.setSetting('ariaDescribedBy', val);
+	    }
+
+	    /**
+	     * 
+	     * @returns {string[]}
+	     */
+
+	  }, {
+	    key: 'ariaValuetext',
+	    get: function get() {
+	      return this.getSetting('ariaValuetext');
+	    }
+
+	    /**
+	     * 
+	     * @param {string[]}
+	     */
+	    ,
+	    set: function set(val) {
+	      this.setSetting('ariaValuetext', val);
 	    }
 
 	    /**
@@ -985,7 +1030,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	  tabindex: [0, 0],
 	  ariaLabel: '',
 	  ariaLabelledBy: '',
-	  ariaDescribedBy: ''
+	  ariaDescribedBy: '',
+	  ariaValuetext: []
 	};
 	CgSlider.EVENTS = {
 	  CHANGE: 'change',
@@ -996,9 +1042,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = CgSlider;
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
@@ -1012,8 +1058,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less", function() {
-				var newContent = require("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less");
+			module.hot.accept("!!../node_modules/css-loader/index.js!../node_modules/postcss-loader/index.js!../node_modules/less-loader/index.js!./common.less", function() {
+				var newContent = require("!!../node_modules/css-loader/index.js!../node_modules/postcss-loader/index.js!../node_modules/less-loader/index.js!./common.less");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -1022,9 +1068,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		module.hot.dispose(function() { update(); });
 	}
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(4)();
 	// imports
@@ -1036,9 +1082,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	// exports
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/*
 		MIT License http://www.opensource.org/licenses/mit-license.php
@@ -1092,9 +1138,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*
 		MIT License http://www.opensource.org/licenses/mit-license.php
@@ -1109,7 +1155,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			};
 		},
 		isOldIE = memoize(function() {
-			return /msie [6-9]\b/.test(window.navigator.userAgent.toLowerCase());
+			return /msie [6-9]\b/.test(self.navigator.userAgent.toLowerCase());
 		}),
 		getHeadElement = memoize(function () {
 			return document.head || document.getElementsByTagName("head")[0];
@@ -1344,9 +1390,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
 	//
@@ -1652,9 +1698,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// Source: http://jsfiddle.net/vWx8V/
 	// http://stackoverflow.com/questions/5603195/full-list-of-javascript-keycodes
@@ -1804,9 +1850,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(module) {/*!
 	 * @name JavaScript/NodeJS Merge v1.2.0
@@ -1985,9 +2031,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	})(typeof module === 'object' && module && typeof module.exports === 'object' && module.exports);
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9)(module)))
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = function(module) {
 		if(!module.webpackPolyfill) {
@@ -2001,9 +2047,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -2088,9 +2134,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	};
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -2111,9 +2157,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	}
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -2221,6 +2267,18 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 
 	  /**
+	   * Get absolute index in range by value
+	   * @param {number} val
+	   * @param {number} min
+	   * @param {number} [step = 1]
+	   * @returns {number}
+	   */
+	  getValueIndex: function getIndex(val, min, step) {
+	    step = step || 1;
+	    return Math.round(Math.abs(min - val) / step);
+	  },
+
+	  /**
 	   * Sets attribute with `attrName` to passed element if `attrVal` is not empty otherwise remove this attribute.
 	   * @param {Element} element
 	   * @param {string} attrName
@@ -2237,7 +2295,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	};
 
-/***/ }
+/***/ })
 /******/ ])
 });
 ;

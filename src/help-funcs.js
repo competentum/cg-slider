@@ -95,6 +95,18 @@ export default {
   },
 
   /**
+   * Get absolute index in range by value
+   * @param {number} val
+   * @param {number} min
+   * @param {number} [step = 1]
+   * @returns {number}
+   */
+  getValueIndex: function getIndex(val, min, step) {
+    step = step || 1;
+    return Math.round(Math.abs(min - val) / step);
+  },
+
+  /**
    * Sets attribute with `attrName` to passed element if `attrVal` is not empty otherwise remove this attribute.
    * @param {Element} element
    * @param {string} attrName

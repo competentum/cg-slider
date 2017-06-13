@@ -59,4 +59,22 @@ describe('Help functions:', function () {
     });
   });
 
+  describe('getValueIndex', function () {
+    it('should get proper index for positive range', function () {
+      expect(helpFuncs.getValueIndex(3, 0, 1)).toEqual(3); // 0 1 2 3 ...
+    });
+
+    it('should get proper index for negative range with default step', function () {
+      expect(helpFuncs.getValueIndex(-1, -10)).toEqual(9); // -10 -9 ... -1 0 ...
+    });
+
+    it('should get proper index for >1 step', function () {
+      expect(helpFuncs.getValueIndex(0, -4, 2)).toEqual(2); // -4 -2 0 ...
+    });
+
+    it('should get proper index for <1 step', function () {
+      expect(helpFuncs.getValueIndex(1.4, 1, 0.2)).toEqual(2); // 1 1.2 1.4 ...
+    });
+  });
+
 });

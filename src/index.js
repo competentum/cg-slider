@@ -30,6 +30,8 @@ import helpFuncs from './help-funcs';
  * @property {string|string[]} ariaDescribedBy - Id of the element that describes the current slider. It can be array of two strings for the range slider.
  *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
  *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
+ * @property {string[]} ariaValuetext - Array of labels for screen readers. Label order (indices) should be the same as the order of values (indices) in the range array.
+ *                                      For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
  */
 
 const SLIDER_CLASS = 'cg-slider';
@@ -59,6 +61,7 @@ class CgSlider extends EventEmitter {
     ariaLabel: '',
     ariaLabelledBy: '',
     ariaDescribedBy: '',
+    ariaValuetext: []
   };
 
   /**
@@ -240,6 +243,22 @@ class CgSlider extends EventEmitter {
   }
 
   /**
+   * 
+   * @returns {string[]}
+   */
+  get ariaValuetext() {
+    return this.getSetting('ariaValuetext');
+  }
+
+  /**
+   * 
+   * @param {string[]}
+   */
+  set ariaValuetext(val) {
+    this.setSetting('ariaValuetext', val);
+  }
+
+  /**
    * DOM Element which contains slider.
    * @returns {Element}
    */
@@ -374,6 +393,7 @@ class CgSlider extends EventEmitter {
       case 'max':
       case 'step':
       case 'isRange':
+      case 'ariaValuetext':
         return this._settings[name];
 
       case 'tabindex':
@@ -404,6 +424,7 @@ class CgSlider extends EventEmitter {
       case 'min':
       case 'max':
       case 'step':
+      case 'ariaValuetext':
         this._settings[name] = val;
 
         if (this._value) {
@@ -756,6 +777,21 @@ class CgSlider extends EventEmitter {
     maxHandle.setAttribute('aria-valuemax', this.max);
   }
 
+  /**
+   * Update aria-valuetext attributes for both handles
+   * @private
+   * @param {number} valMin Min handle value
+   * @param {number} valMax Max handle value
+   */
+  _updateValueTexts(valMin, valMax) {
+    const minIndex = helpFuncs.getValueIndex(valMin, this.min, this.step);
+    const maxIndex = helpFuncs.getValueIndex(valMax, this.min, this.step);
+    const minValueText = this.ariaValuetext[minIndex] || valMin;
+    const maxValueText = this.ariaValuetext[maxIndex] || valMax;
+    this._minHandleElement.setAttribute('aria-valuetext', minValueText);
+    this._maxHandleElement.setAttribute('aria-valuetext', maxValueText);
+  }
+
   _updateDisabled() {
     if (!this._rootElement)
       return;
@@ -822,6 +858,9 @@ class CgSlider extends EventEmitter {
       //todo: add aria-value formatter
       this._minHandleElement.setAttribute('aria-valuenow', val[0]);
       this._maxHandleElement.setAttribute('aria-valuenow', val[1]);
+
+      this._updateValueTexts(val[0], val[1]);
+
       this._progressElement.style.left = `${minPercentVal}%`;
       this._progressElement.style.width = `${maxPercentVal - minPercentVal}%`;
       this.emit(this.constructor.EVENTS.CHANGE, this.value);
