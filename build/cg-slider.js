@@ -124,7 +124,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {string|string[]} ariaDescribedBy - Id of the element that describes the current slider. It can be array of two strings for the range slider.
 	 *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
 	 *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
-	 * @property {function(number):string} ariaValuetextFormatter - Label formatter callback. It receives value as a parameter and should return corresponding label.
+	 * @property {function(number):string} ariaValueTextFormatter - Label formatter callback. It receives value as a parameter and should return corresponding label.
 	 *                                                              For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
 	 */
 
@@ -190,7 +190,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 	          break;
 
-	        case 'ariaValuetextFormatter':
+	        case 'ariaValueTextFormatter':
 	          if (typeof setting !== 'function') {
 	            throw new Error(this.name + ' error: type of passed setting \'' + name + '\' must be a function.');
 	          }
@@ -305,7 +305,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'max':
 	        case 'step':
 	        case 'isRange':
-	        case 'ariaValuetextFormatter':
+	        case 'ariaValueTextFormatter':
 	          return this._settings[name];
 
 	        case 'tabindex':
@@ -339,7 +339,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'min':
 	        case 'max':
 	        case 'step':
-	        case 'ariaValuetextFormatter':
 	          this._settings[name] = val;
 
 	          if (this._value) {
@@ -377,6 +376,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	          this._settings[name] = val;
 
 	          this._updateAriaLabels();
+	          break;
+
+	        case 'ariaValueTextFormatter':
+	          this._settings[name] = val;
+	          if (typeof this._value !== 'undefined') {
+	            this._updateAriaValueTexts(this._value[0], this._value[1]);
+	          }
 	          break;
 
 	        default:
@@ -702,10 +708,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: '_updateAriaValueTexts',
 	    value: function _updateAriaValueTexts(valMin, valMax) {
-	      var ariaValuetextFormatter = this._settings.ariaValuetextFormatter;
+	      var ariaValueTextFormatter = this._settings.ariaValueTextFormatter;
 
-	      var minValueText = ariaValuetextFormatter.call(this, valMin);
-	      var maxValueText = ariaValuetextFormatter.call(this, valMax);
+	      var minValueText = ariaValueTextFormatter.call(this, valMin);
+	      var maxValueText = ariaValueTextFormatter.call(this, valMax);
 	      this._minHandleElement.setAttribute('aria-valuetext', minValueText);
 	      this._maxHandleElement.setAttribute('aria-valuetext', maxValueText);
 	    }
@@ -852,9 +858,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 
 	  }, {
-	    key: 'ariaValuetextFormatter',
+	    key: 'ariaValueTextFormatter',
 	    get: function get() {
-	      return this.getSetting('ariaValuetextFormatter');
+	      return this.getSetting('ariaValueTextFormatter');
 	    }
 
 	    /**
@@ -863,7 +869,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	     */
 	    ,
 	    set: function set(val) {
-	      this.setSetting('ariaValuetextFormatter', val);
+	      this.setSetting('ariaValueTextFormatter', val);
 	    }
 
 	    /**
@@ -1037,7 +1043,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  ariaLabel: '',
 	  ariaLabelledBy: '',
 	  ariaDescribedBy: '',
-	  ariaValuetextFormatter: function ariaValuetextFormatter(val) {
+	  ariaValueTextFormatter: function ariaValueTextFormatter(val) {
 	    return val.toString();
 	  }
 	};
