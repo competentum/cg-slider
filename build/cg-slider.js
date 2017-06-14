@@ -59,14 +59,14 @@ return /******/ (function(modules) { // webpackBootstrap
 /************************************************************************/
 /******/ ([
 /* 0 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	module.exports = __webpack_require__(1);
 
 
-/***/ },
+/***/ }),
 /* 1 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -124,6 +124,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {string|string[]} ariaDescribedBy - Id of the element that describes the current slider. It can be array of two strings for the range slider.
 	 *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
 	 *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
+	 * @property {function(number):string} ariaValueTextFormatter - Label formatter callback. It receives value as a parameter and should return corresponding label.
+	 *                                                              For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
 	 */
 
 	var SLIDER_CLASS = 'cg-slider';
@@ -185,6 +187,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	            }
 	          } else {
 	            throw new Error(this.name + ' error: type of passed setting \'' + name + '\' is not supported.');
+	          }
+	          break;
+
+	        case 'ariaValueTextFormatter':
+	          if (typeof setting !== 'function') {
+	            throw new Error(this.name + ' error: type of passed setting \'' + name + '\' must be a function.');
 	          }
 	          break;
 
@@ -297,6 +305,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'max':
 	        case 'step':
 	        case 'isRange':
+	        case 'ariaValueTextFormatter':
 	          return this._settings[name];
 
 	        case 'tabindex':
@@ -367,6 +376,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	          this._settings[name] = val;
 
 	          this._updateAriaLabels();
+	          break;
+
+	        case 'ariaValueTextFormatter':
+	          this._settings[name] = val;
+	          if (typeof this._value !== 'undefined') {
+	            this._updateAriaValueTexts(this._value[0], this._value[1]);
+	          }
 	          break;
 
 	        default:
@@ -681,6 +697,24 @@ return /******/ (function(modules) { // webpackBootstrap
 	      maxHandle.setAttribute('aria-valuemin', this.min);
 	      maxHandle.setAttribute('aria-valuemax', this.max);
 	    }
+
+	    /**
+	     * Update aria-valuetext attributes for both handles
+	     * @private
+	     * @param {number} valMin Min handle value
+	     * @param {number} valMax Max handle value
+	     */
+
+	  }, {
+	    key: '_updateAriaValueTexts',
+	    value: function _updateAriaValueTexts(valMin, valMax) {
+	      var ariaValueTextFormatter = this._settings.ariaValueTextFormatter;
+
+	      var minValueText = ariaValueTextFormatter.call(this, valMin);
+	      var maxValueText = ariaValueTextFormatter.call(this, valMax);
+	      this._minHandleElement.setAttribute('aria-valuetext', minValueText);
+	      this._maxHandleElement.setAttribute('aria-valuetext', maxValueText);
+	    }
 	  }, {
 	    key: '_updateDisabled',
 	    value: function _updateDisabled() {
@@ -755,6 +789,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	        //todo: add aria-value formatter
 	        this._minHandleElement.setAttribute('aria-valuenow', val[0]);
 	        this._maxHandleElement.setAttribute('aria-valuenow', val[1]);
+
+	        this._updateAriaValueTexts(val[0], val[1]);
+
 	        this._progressElement.style.left = minPercentVal + '%';
 	        this._progressElement.style.width = maxPercentVal - minPercentVal + '%';
 	        this.emit(this.constructor.EVENTS.CHANGE, this.value);
@@ -813,6 +850,26 @@ return /******/ (function(modules) { // webpackBootstrap
 	    ,
 	    set: function set(val) {
 	      this.setSetting('ariaDescribedBy', val);
+	    }
+
+	    /**
+	     * 
+	     * @returns {function}
+	     */
+
+	  }, {
+	    key: 'ariaValueTextFormatter',
+	    get: function get() {
+	      return this.getSetting('ariaValueTextFormatter');
+	    }
+
+	    /**
+	     * 
+	     * @param {function(number):string} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this.setSetting('ariaValueTextFormatter', val);
 	    }
 
 	    /**
@@ -985,7 +1042,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	  tabindex: [0, 0],
 	  ariaLabel: '',
 	  ariaLabelledBy: '',
-	  ariaDescribedBy: ''
+	  ariaDescribedBy: '',
+	  ariaValueTextFormatter: function ariaValueTextFormatter(val) {
+	    return val.toString();
+	  }
 	};
 	CgSlider.EVENTS = {
 	  CHANGE: 'change',
@@ -996,9 +1056,9 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	module.exports = CgSlider;
 
-/***/ },
+/***/ }),
 /* 2 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	// style-loader: Adds some css to the DOM by adding a <style> tag
 
@@ -1012,8 +1072,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	if(false) {
 		// When the styles change, update the <style> tags
 		if(!content.locals) {
-			module.hot.accept("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less", function() {
-				var newContent = require("!!./../node_modules/css-loader/index.js!./../node_modules/postcss-loader/index.js!./../node_modules/less-loader/index.js!./common.less");
+			module.hot.accept("!!../node_modules/css-loader/index.js!../node_modules/postcss-loader/index.js!../node_modules/less-loader/index.js!./common.less", function() {
+				var newContent = require("!!../node_modules/css-loader/index.js!../node_modules/postcss-loader/index.js!../node_modules/less-loader/index.js!./common.less");
 				if(typeof newContent === 'string') newContent = [[module.id, newContent, '']];
 				update(newContent);
 			});
@@ -1022,9 +1082,9 @@ return /******/ (function(modules) { // webpackBootstrap
 		module.hot.dispose(function() { update(); });
 	}
 
-/***/ },
+/***/ }),
 /* 3 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	exports = module.exports = __webpack_require__(4)();
 	// imports
@@ -1036,9 +1096,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	// exports
 
 
-/***/ },
+/***/ }),
 /* 4 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	/*
 		MIT License http://www.opensource.org/licenses/mit-license.php
@@ -1092,9 +1152,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	};
 
 
-/***/ },
+/***/ }),
 /* 5 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/*
 		MIT License http://www.opensource.org/licenses/mit-license.php
@@ -1109,7 +1169,7 @@ return /******/ (function(modules) { // webpackBootstrap
 			};
 		},
 		isOldIE = memoize(function() {
-			return /msie [6-9]\b/.test(window.navigator.userAgent.toLowerCase());
+			return /msie [6-9]\b/.test(self.navigator.userAgent.toLowerCase());
 		}),
 		getHeadElement = memoize(function () {
 			return document.head || document.getElementsByTagName("head")[0];
@@ -1344,9 +1404,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ },
+/***/ }),
 /* 6 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// Copyright Joyent, Inc. and other Node contributors.
 	//
@@ -1652,9 +1712,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ },
+/***/ }),
 /* 7 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	// Source: http://jsfiddle.net/vWx8V/
 	// http://stackoverflow.com/questions/5603195/full-list-of-javascript-keycodes
@@ -1804,9 +1864,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ },
+/***/ }),
 /* 8 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	/* WEBPACK VAR INJECTION */(function(module) {/*!
 	 * @name JavaScript/NodeJS Merge v1.2.0
@@ -1985,9 +2045,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	})(typeof module === 'object' && module && typeof module.exports === 'object' && module.exports);
 	/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(9)(module)))
 
-/***/ },
+/***/ }),
 /* 9 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	module.exports = function(module) {
 		if(!module.webpackPolyfill) {
@@ -2001,9 +2061,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	}
 
 
-/***/ },
+/***/ }),
 /* 10 */
-/***/ function(module, exports, __webpack_require__) {
+/***/ (function(module, exports, __webpack_require__) {
 
 	'use strict';
 
@@ -2088,9 +2148,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	};
 
-/***/ },
+/***/ }),
 /* 11 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -2111,9 +2171,9 @@ return /******/ (function(modules) { // webpackBootstrap
 	    };
 	}
 
-/***/ },
+/***/ }),
 /* 12 */
-/***/ function(module, exports) {
+/***/ (function(module, exports) {
 
 	'use strict';
 
@@ -2237,7 +2297,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }
 	};
 
-/***/ }
+/***/ })
 /******/ ])
 });
 ;

@@ -30,6 +30,8 @@ import helpFuncs from './help-funcs';
  * @property {string|string[]} ariaDescribedBy - Id of the element that describes the current slider. It can be array of two strings for the range slider.
  *                                               This property has higher priority than `ariaLabel` and `ariaLabelledBy`.
  *                                               For more info see [WAI-ARIA specification/#aria-describedby]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-describedby}.
+ * @property {function(number):string} ariaValueTextFormatter - Label formatter callback. It receives value as a parameter and should return corresponding label.
+ *                                                              For more info see [WAI-ARIA specification/#aria-valuetext]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-valuetext}.
  */
 
 const SLIDER_CLASS = 'cg-slider';
@@ -59,6 +61,7 @@ class CgSlider extends EventEmitter {
     ariaLabel: '',
     ariaLabelledBy: '',
     ariaDescribedBy: '',
+    ariaValueTextFormatter: val => val.toString()
   };
 
   /**
@@ -115,6 +118,12 @@ class CgSlider extends EventEmitter {
         }
         else {
           throw new Error(`${this.name} error: type of passed setting '${name}' is not supported.`);
+        }
+        break;
+      
+      case 'ariaValueTextFormatter':
+        if (typeof setting !== 'function') {
+          throw new Error(`${this.name} error: type of passed setting '${name}' must be a function.`);
         }
         break;
 
@@ -237,6 +246,22 @@ class CgSlider extends EventEmitter {
    */
   set ariaDescribedBy(val) {
     this.setSetting('ariaDescribedBy', val);
+  }
+
+  /**
+   * 
+   * @returns {function}
+   */
+  get ariaValueTextFormatter() {
+    return this.getSetting('ariaValueTextFormatter');
+  }
+
+  /**
+   * 
+   * @param {function(number):string} val
+   */
+  set ariaValueTextFormatter(val) {
+    this.setSetting('ariaValueTextFormatter', val);
   }
 
   /**
@@ -374,6 +399,7 @@ class CgSlider extends EventEmitter {
       case 'max':
       case 'step':
       case 'isRange':
+      case 'ariaValueTextFormatter':
         return this._settings[name];
 
       case 'tabindex':
@@ -441,6 +467,13 @@ class CgSlider extends EventEmitter {
         this._settings[name] = val;
 
         this._updateAriaLabels();
+        break;
+
+      case 'ariaValueTextFormatter':
+        this._settings[name] = val;
+        if (typeof this._value !== 'undefined') {
+          this._updateAriaValueTexts(this._value[0], this._value[1]);
+        }
         break;
 
       default:
@@ -756,6 +789,20 @@ class CgSlider extends EventEmitter {
     maxHandle.setAttribute('aria-valuemax', this.max);
   }
 
+  /**
+   * Update aria-valuetext attributes for both handles
+   * @private
+   * @param {number} valMin Min handle value
+   * @param {number} valMax Max handle value
+   */
+  _updateAriaValueTexts(valMin, valMax) {
+    const { ariaValueTextFormatter } = this._settings;
+    const minValueText = ariaValueTextFormatter.call(this, valMin);
+    const maxValueText = ariaValueTextFormatter.call(this, valMax);
+    this._minHandleElement.setAttribute('aria-valuetext', minValueText);
+    this._maxHandleElement.setAttribute('aria-valuetext', maxValueText);
+  }
+
   _updateDisabled() {
     if (!this._rootElement)
       return;
@@ -822,6 +869,9 @@ class CgSlider extends EventEmitter {
       //todo: add aria-value formatter
       this._minHandleElement.setAttribute('aria-valuenow', val[0]);
       this._maxHandleElement.setAttribute('aria-valuenow', val[1]);
+
+      this._updateAriaValueTexts(val[0], val[1]);
+
       this._progressElement.style.left = `${minPercentVal}%`;
       this._progressElement.style.width = `${maxPercentVal - minPercentVal}%`;
       this.emit(this.constructor.EVENTS.CHANGE, this.value);
