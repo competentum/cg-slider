@@ -47,7 +47,22 @@ export default {
       value[0] = Math.min(value[0], maxVal);
     }
 
+    // round all values
+    value = value.map(this.roundValue);
+
     return value;
+  },
+
+  /**
+   * Round single value up to 5 decimal positions
+   * Note: it will return `NaN` for decimals smaller than Ne-6,
+   * e.g.: `roundValue(0.0000009) = roundValue(9e-7) = NaN`
+   * @param {number} num - a number to round
+   * @returns {number}
+   */
+  roundValue: function roundValue(num) {
+    const precision = 5;
+    return +(Math.round(num + 'e+' + precision)  + 'e-' + precision);
   },
 
   /**
