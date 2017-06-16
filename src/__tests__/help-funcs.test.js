@@ -32,22 +32,18 @@ describe('Help functions:', function () {
   });
 
   describe('roundValue', function() {
-    it('should round decimal up to precision of 5', function () {
+    it('should round decimal up to precision of 10 places', function () {
       expect(helpFuncs.roundValue(0.0)).toBe(0);
       expect(helpFuncs.roundValue(0)).toBe(0);
       expect(helpFuncs.roundValue(-0)).toBe(-0);
       expect(helpFuncs.roundValue(1.0)).toBe(1);
       expect(helpFuncs.roundValue(1.2)).toBe(1.2);
       expect(helpFuncs.roundValue(5.00000)).toBe(5);
+      expect(helpFuncs.roundValue(3.00003)).toBe(3.00003);
       expect(helpFuncs.roundValue(5.50)).toBe(5.5);
-      expect(helpFuncs.roundValue(1.200001)).toBe(1.2);
+      expect(helpFuncs.roundValue(1.20000000001)).toBe(1.2);
       expect(helpFuncs.roundValue(0.20001)).toBe(0.20001);
       expect(helpFuncs.roundValue(-999999999.95000000005)).toBe(-999999999.95);
-    });
-
-    it('should return NaN for very small decimals', function () {
-      expect(Number.isNaN(helpFuncs.roundValue(0.000005))).toBe(false);
-      expect(Number.isNaN(helpFuncs.roundValue(0.0000005))).toBe(true);
     });
   });
 

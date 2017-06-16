@@ -2238,15 +2238,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	  },
 
 	  /**
-	   * Round single value up to 5 decimal positions
-	   * Note: it will return `NaN` for decimals smaller than Ne-6,
-	   * e.g.: `roundValue(0.0000009) = roundValue(9e-7) = NaN`
+	   * Round single value up to 10 decimal positions
 	   * @param {number} num - a number to round
 	   * @returns {number}
 	   */
 	  roundValue: function roundValue(num) {
-	    var precision = 5;
-	    return +(Math.round(num + 'e+' + precision) + 'e-' + precision);
+	    return +num.toFixed(10);
 	  },
 
 	  /**
