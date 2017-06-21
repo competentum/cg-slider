@@ -47,7 +47,19 @@ export default {
       value[0] = Math.min(value[0], maxVal);
     }
 
+    // round all values
+    value = value.map(this.roundValue);
+
     return value;
+  },
+
+  /**
+   * Round single value up to 10 decimal positions
+   * @param {number} num - a number to round
+   * @returns {number}
+   */
+  roundValue: function roundValue(num) {
+    return +(num.toFixed(10));
   },
 
   /**
