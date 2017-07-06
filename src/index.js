@@ -733,8 +733,8 @@ class CgSlider extends EventEmitter {
       <div class="${rootClasses.join(' ')}">
         <div class="${SLIDER_BG}">
           <div class="${PROGRESS_CLASS}"></div>
-          <div class="${HANDLE_CLASS} ${MIN_HANDLE_CLASS}" tabindex="${this._settings.tabindex[0]}" role="slider"></div>
-          <div class="${HANDLE_CLASS} ${MAX_HANDLE_CLASS}" tabindex="${this._settings.tabindex[1]}" role="slider"></div>
+          <div class="${HANDLE_CLASS} ${MIN_HANDLE_CLASS}" tabindex="${this._settings.tabindex[0]}" role="slider" aria-orientation="horizontal"></div>
+          <div class="${HANDLE_CLASS} ${MAX_HANDLE_CLASS}" tabindex="${this._settings.tabindex[1]}" role="slider" aria-orientation="horizontal"></div>
         </div>
       </div>
     `;
