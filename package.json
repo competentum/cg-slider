@@ -1,6 +1,6 @@
 {
   "name": "cg-slider",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Accessible Slider Component",
   "main": "build/cg-slider.min.js",
   "pre-commit": [
