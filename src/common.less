@@ -37,6 +37,7 @@
     cursor: pointer;
     margin-left: -@handle-size/2;
     margin-top: -@handle-size/2;
+    z-index: 1;
 
     &:before,
     &:after {
@@ -73,6 +74,20 @@
       &:before{
         background-color: fadeout(@main-color, 60);
       }
+    }
+  }
+
+  .cg-slider-ticks {
+    position: relative;
+    width: 100%;
+    top: -20px;
+
+    .cg-slider-tick {
+      position: absolute;
+      height: 6px;
+      width: 2px;
+      margin-left: -1px;
+      background: @bg-color;
     }
   }
 

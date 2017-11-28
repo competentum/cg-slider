@@ -119,5 +119,16 @@ export default {
     else {
       element.removeAttribute(attrName);
     }
+  },
+
+
+  /**
+   * Removes all `parent` children
+   * @param {Element} parent
+   */
+  removeChildElements: function (parent) {
+    while (parent.firstChild) {
+      parent.removeChild(parent.firstChild);
+    }
   }
 };

@@ -41,6 +41,8 @@ const PROGRESS_CLASS = `${SLIDER_CLASS}-progress`;
 const HANDLE_CLASS = `${SLIDER_CLASS}-handle`;
 const MIN_HANDLE_CLASS = `${SLIDER_CLASS}-handle-min`;
 const MAX_HANDLE_CLASS = `${SLIDER_CLASS}-handle-max`;
+const TICKS_CLASS = `${SLIDER_CLASS}-ticks`;
+const TICKS_ITEM_CLASS= `${SLIDER_CLASS}-tick`;
 
 const LARGE_CHANGE_MULTIPLIER = 10;
 
@@ -57,6 +59,7 @@ class CgSlider extends EventEmitter {
     min: 0,
     max: 100,
     step: 1,
+    ticks: false,
     tabindex: [0, 0],
     ariaLabel: '',
     ariaLabelledBy: '',
@@ -354,6 +357,22 @@ class CgSlider extends EventEmitter {
 
   /**
    *
+   * @returns {boolean}
+   */
+  get ticks() {
+    return this.getSetting('ticks');
+  }
+
+  /**
+   *
+   * @param {boolean} val
+   */
+  set ticks(val) {
+    this.setSetting('ticks', val);
+  }
+
+  /**
+   *
    * @returns {number|number[]}
    */
   get tabindex() {
@@ -399,6 +418,7 @@ class CgSlider extends EventEmitter {
       case 'max':
       case 'step':
       case 'isRange':
+      case 'ticks':  
       case 'ariaValueTextFormatter':
         return this._settings[name];
 
@@ -438,8 +458,13 @@ class CgSlider extends EventEmitter {
         }
 
         this._updateAriaLimits();
-        //todo: redraw ticks
+        this._updateTicks();
         break;
+      
+      case 'ticks':
+        this._settings[name] = val;
+        this._updateTicks();
+        break;  
 
       //todo: remove this setting from this method to make it readable only.
       case 'isRange':
@@ -736,10 +761,12 @@ class CgSlider extends EventEmitter {
           <div class="${HANDLE_CLASS} ${MIN_HANDLE_CLASS}" tabindex="${this._settings.tabindex[0]}" role="slider" aria-orientation="horizontal"></div>
           <div class="${HANDLE_CLASS} ${MAX_HANDLE_CLASS}" tabindex="${this._settings.tabindex[1]}" role="slider" aria-orientation="horizontal"></div>
         </div>
+        <div class="${TICKS_CLASS}" aria-hidden="true"></div>
       </div>
     `;
 
     this._rootElement = utils.createHTML(elementHTML);
+    this._ticksElement = this._rootElement.querySelector(`.${TICKS_CLASS}`);
     this._progressElement = this._rootElement.querySelector(`.${PROGRESS_CLASS}`);
     this._handlesContainer = this._rootElement.querySelector(`.${SLIDER_BG}`);
     this._minHandleElement = this._handlesContainer.querySelector(`.${MIN_HANDLE_CLASS}`);
@@ -748,8 +775,36 @@ class CgSlider extends EventEmitter {
     this._updateAriaLimits();
     this._updateAriaLabels();
     this._updateDisabled();
+    this._updateTicks();
 
     this.container.appendChild(this._rootElement);
+  }
+
+  /**
+   * @private
+   */
+  _updateTicks() {
+    if (!this._ticksElement)
+      return;
+    
+    helpFuncs.removeChildElements(this._ticksElement);
+    
+    if (this._settings['ticks']) {
+      // get percentage offset & add ticks
+      const intervals = Math.ceil(Math.abs(this.max - this.min) / this.step);
+      const tickFrag = document.createDocumentFragment();
+      
+      let interval = 0;
+      while (interval <= intervals) {
+        const tick = document.createElement('div');
+        tick.className = TICKS_ITEM_CLASS;
+        tick.style['left'] = helpFuncs.getPercent(interval, this.max, this.min) + '%';
+        tickFrag.appendChild(tick);
+        interval += 1;
+      }
+
+      this._ticksElement.appendChild(tickFrag);
+    }
   }
 
   _updateAriaLabels() {
