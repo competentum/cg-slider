@@ -21,6 +21,10 @@ import helpFuncs from './help-funcs';
  * @property {number} max - The maximum value of the slider.
  * @property {number} step - Determines the size or amount of each interval or step the slider takes between the min and max.
  *                           The full specified value range of the slider (max - min) should be evenly divisible by the step.
+ * @property {boolean|function(Element, number, number):boolean} ticks - Controls slider value ticks. You can configure (or skip) every tick by setting this option as a formatter function.
+ *                          The formatter function receives:
+ *                          `tick` DOM Element, `step` number (starting from zero), calculated `offsetPercent` percent number from the left side of a tick parent.
+ *                          Return falsy value from the formatter to skip the tick creation.
  * @property {number|number[]} tabindex - Tabindex of handle element. It can be array of two numbers for the range slider.
  * @property {string|string[]} ariaLabel - String that labels the current slider for screen readers. It can be array of two strings the for range slider.
  *                                         For more info see [WAI-ARIA specification/#aria-label]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-label}.
@@ -357,7 +361,7 @@ class CgSlider extends EventEmitter {
 
   /**
    *
-   * @returns {boolean}
+   * @returns {boolean|function}
    */
   get ticks() {
     return this.getSetting('ticks');
@@ -365,7 +369,7 @@ class CgSlider extends EventEmitter {
 
   /**
    *
-   * @param {boolean} val
+   * @param {boolean|function} val
    */
   set ticks(val) {
     this.setSetting('ticks', val);
@@ -781,6 +785,7 @@ class CgSlider extends EventEmitter {
   }
 
   /**
+   * Get percentage offset & add ticks
    * @private
    */
   _updateTicks() {
@@ -790,17 +795,29 @@ class CgSlider extends EventEmitter {
     helpFuncs.removeChildElements(this._ticksElement);
     
     if (this._settings['ticks']) {
-      // get percentage offset & add ticks
-      const intervals = Math.ceil(Math.abs(this.max - this.min) / this.step);
+      const stepCount = Math.ceil(Math.abs(this.max - this.min) / this.step);
       const tickFrag = document.createDocumentFragment();
       
-      let interval = 0;
-      while (interval <= intervals) {
-        const tick = document.createElement('div');
-        tick.className = TICKS_ITEM_CLASS;
-        tick.style['left'] = helpFuncs.getPercent(interval, this.max, this.min) + '%';
+      let step = 0;
+      while (step <= stepCount) {
+        const offsetPercent = helpFuncs.getPercent(step, this.max, this.min);
+        let formatterResult;
+        let tick = document.createElement('div');
+        tick.classList.add(TICKS_ITEM_CLASS);
+        tick.style['left'] =  `${offsetPercent}%`;
+
+        if (typeof this._settings['ticks'] === 'function') {
+          formatterResult = this._settings['ticks'].call(this, tick, step, offsetPercent);
+          // skip the tick creation
+          if (typeof formatterResult !== 'undefined' && !formatterResult) {
+            tick = null;
+            step += 1;
+            continue;
+          }
+        }
+        
         tickFrag.appendChild(tick);
-        interval += 1;
+        step += 1;
       }
 
       this._ticksElement.appendChild(tickFrag);

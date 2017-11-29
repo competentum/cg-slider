@@ -54,6 +54,7 @@ See [slider.on](#method_on) method to know how to use events.
     - `tabindex` *{number | number[]}* Tabindex of handle element. It can be array of two numbers for the range slider. Default: `0`.
     - `step` *{number}* Determines the size or amount of each interval or step the slider takes between the min and max. 
     The full specified value range of the slider (max - min) should be evenly divisible by the step. Default: `1`.
+    - `ticks` *{boolean|function(Element, number, number):boolean}* - Controls slider value ticks. You can configure (or skip) every tick by setting this option as a formatter function. Default: `false`.
     - `ariaLabel` *{string | string[]}* String that labels the current slider for screen readers. 
     It can be array of two strings for the range slider.
     For more info see [WAI-ARIA specification/#aria-label](https://www.w3.org/TR/wai-aria-1.1/#aria-label).
@@ -110,6 +111,15 @@ Tabindex of handle element. It can be array of two numbers for the range slider.
 #### `.step` *{number}*
 Determines the size or amount of each interval or step the slider takes between the min and max. 
 The full specified value range of the slider (max - min) should be evenly divisible by the step.
+
+
+#### `.ticks` *{boolean|function(Element, number, number):boolean}*
+Controls slider value ticks. You can configure (or skip) every tick by setting this option as a formatter function. The formatter function receives:
+- `tick` *{Element}* - tick's Element
+- `step` *{number}* - step number (starting from zero)
+- `offsetPercent` *{number}* - calculated percent number from the left side of a tick parent
+
+Return falsy value from the formatter to skip the tick creation.
 
 #### `.value` *{number | number[]}*
 Current value of the slider.

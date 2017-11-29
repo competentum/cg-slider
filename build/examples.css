@@ -33,6 +33,10 @@ body {
     margin-bottom: 5px;
 }
 
+.ticks-offset {
+    margin-bottom: 20px;
+}
+
 @media (min-width: 768px) {
     body {
         padding: 1rem;

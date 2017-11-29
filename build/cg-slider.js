@@ -115,6 +115,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {number} max - The maximum value of the slider.
 	 * @property {number} step - Determines the size or amount of each interval or step the slider takes between the min and max.
 	 *                           The full specified value range of the slider (max - min) should be evenly divisible by the step.
+	 * @property {boolean|function(Element, number, number):boolean} ticks - Controls slider value ticks. You can configure (or skip) every tick by setting this option as a formatter function.
+	 *                          The formatter function receives:
+	 *                          `tick` DOM Element, `step` number (starting from zero), calculated `offsetPercent` percent number from the left side of a tick parent.
+	 *                          Return falsy value from the formatter to skip the tick creation.
 	 * @property {number|number[]} tabindex - Tabindex of handle element. It can be array of two numbers for the range slider.
 	 * @property {string|string[]} ariaLabel - String that labels the current slider for screen readers. It can be array of two strings the for range slider.
 	 *                                         For more info see [WAI-ARIA specification/#aria-label]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-label}.
@@ -670,6 +674,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
+	     * Get percentage offset & add ticks
 	     * @private
 	     */
 
@@ -681,17 +686,29 @@ return /******/ (function(modules) { // webpackBootstrap
 	      _helpFuncs2.default.removeChildElements(this._ticksElement);
 
 	      if (this._settings['ticks']) {
-	        // get percentage offset & add ticks
-	        var intervals = Math.ceil(Math.abs(this.max - this.min) / this.step);
+	        var stepCount = Math.ceil(Math.abs(this.max - this.min) / this.step);
 	        var tickFrag = document.createDocumentFragment();
 
-	        var interval = 0;
-	        while (interval <= intervals) {
+	        var step = 0;
+	        while (step <= stepCount) {
+	          var offsetPercent = _helpFuncs2.default.getPercent(step, this.max, this.min);
+	          var formatterResult = void 0;
 	          var tick = document.createElement('div');
-	          tick.className = TICKS_ITEM_CLASS;
-	          tick.style['left'] = _helpFuncs2.default.getPercent(interval, this.max, this.min) + '%';
+	          tick.classList.add(TICKS_ITEM_CLASS);
+	          tick.style['left'] = offsetPercent + '%';
+
+	          if (typeof this._settings['ticks'] === 'function') {
+	            formatterResult = this._settings['ticks'].call(this, tick, step, offsetPercent);
+	            // skip the tick creation
+	            if (typeof formatterResult !== 'undefined' && !formatterResult) {
+	              tick = null;
+	              step += 1;
+	              continue;
+	            }
+	          }
+
 	          tickFrag.appendChild(tick);
-	          interval += 1;
+	          step += 1;
 	        }
 
 	        this._ticksElement.appendChild(tickFrag);
@@ -1024,7 +1041,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    /**
 	     *
-	     * @returns {boolean}
+	     * @returns {boolean|function}
 	     */
 
 	  }, {
@@ -1035,7 +1052,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    /**
 	     *
-	     * @param {boolean} val
+	     * @param {boolean|function} val
 	     */
 	    ,
 	    set: function set(val) {
