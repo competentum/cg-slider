@@ -2387,9 +2387,15 @@ return /******/ (function(modules) { // webpackBootstrap
 	   * @param {Element} parent
 	   */
 	  removeChildElements: function removeChildElements(parent) {
-	    while (parent.firstChild) {
-	      parent.removeChild(parent.firstChild);
+	    if (!parent || parent.tagName === 'HTML') {
+	      return;
 	    }
+
+	    while (parent.lastChild) {
+	      parent.removeChild(parent.lastChild);
+	    }
+
+	    return parent;
 	  }
 	};
 
