@@ -23,7 +23,7 @@ import helpFuncs from './help-funcs';
  *                           The full specified value range of the slider (max - min) should be evenly divisible by the step.
  * @property {boolean|function(Element, number, number):boolean} ticks - Controls slider value ticks. You can configure (or skip) every tick by setting this option as a formatter function.
  *                          The formatter function receives:
- *                          `tick` DOM Element, `step` number (starting from zero), calculated `offsetPercent` percent number from the left side of a tick parent.
+ *                          `tick` DOM Element, `currentStep` number value, calculated `offsetPercent` percent number from the left side of a tick parent.
  *                          Return falsy value from the formatter to skip the tick creation.
  * @property {number|number[]} tabindex - Tabindex of handle element. It can be array of two numbers for the range slider.
  * @property {string|string[]} ariaLabel - String that labels the current slider for screen readers. It can be array of two strings the for range slider.
@@ -789,39 +789,37 @@ class CgSlider extends EventEmitter {
    * @private
    */
   _updateTicks() {
+    const { ticks } = this._settings;
+
     if (!this._ticksElement)
       return;
-    
+
     helpFuncs.removeChildElements(this._ticksElement);
+
+    if (!ticks)
+      return;
+
+    const tickFrag = document.createDocumentFragment();
     
-    if (this._settings['ticks']) {
-      const stepCount = Math.ceil(Math.abs(this.max - this.min) / this.step);
-      const tickFrag = document.createDocumentFragment();
+    let currentStep = this.min;
+    while (helpFuncs.roundValue(currentStep) <= this.max) {
+      const offsetPercent = helpFuncs.getPercent(currentStep, this.max, this.min);
+      let tick = document.createElement('div');
+      tick.classList.add(TICKS_ITEM_CLASS);
+      tick.style['left'] = `${offsetPercent}%`;
+
+      const formatterResult = typeof ticks === 'function' ?
+        ticks.call(this, tick, currentStep, offsetPercent) : undefined;
       
-      let step = 0;
-      while (step <= stepCount) {
-        const offsetPercent = helpFuncs.getPercent(step, this.max, this.min);
-        let formatterResult;
-        let tick = document.createElement('div');
-        tick.classList.add(TICKS_ITEM_CLASS);
-        tick.style['left'] =  `${offsetPercent}%`;
-
-        if (typeof this._settings['ticks'] === 'function') {
-          formatterResult = this._settings['ticks'].call(this, tick, step, offsetPercent);
-          // skip the tick creation
-          if (typeof formatterResult !== 'undefined' && !formatterResult) {
-            tick = null;
-            step += 1;
-            continue;
-          }
-        }
-        
+      if (typeof formatterResult === 'undefined' || formatterResult) {
         tickFrag.appendChild(tick);
-        step += 1;
       }
-
-      this._ticksElement.appendChild(tickFrag);
+      
+      tick = null;
+      currentStep += this.step;
     }
+
+    this._ticksElement.appendChild(tickFrag);
   }
 
   _updateAriaLabels() {

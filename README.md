@@ -116,7 +116,7 @@ The full specified value range of the slider (max - min) should be evenly divisi
 #### `.ticks` *{boolean|function(Element, number, number):boolean}*
 Controls slider value ticks. You can configure (or skip) every tick by setting this option as a formatter function. The formatter function receives:
 - `tick` *{Element}* - tick's Element
-- `step` *{number}* - step number (starting from zero)
+- `currentStep` *{number}* - current step value
 - `offsetPercent` *{number}* - calculated percent number from the left side of a tick parent
 
 Return falsy value from the formatter to skip the tick creation.
