@@ -829,7 +829,13 @@ class CgSlider extends EventEmitter {
     // for not range slider value can be number
     // so it should be converted to array
     if (typeof val === 'number') {
-      let minVal = this._value && this._value[0] || this.min;
+      let minVal;
+      // reset set minimum value for non-range if its larger than maximum
+      if (this.isRange) {
+        minVal = this._value && this._value[0] || this.min;
+      } else {
+        minVal = this._value && this._value[0] <= val ? this._value[0] : this.min;
+      }
       val = [minVal, val];
     }
 

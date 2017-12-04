@@ -744,7 +744,13 @@ return /******/ (function(modules) { // webpackBootstrap
 	      // for not range slider value can be number
 	      // so it should be converted to array
 	      if (typeof val === 'number') {
-	        var minVal = this._value && this._value[0] || this.min;
+	        var minVal = void 0;
+	        // reset set minimum value for non-range if its larger than maximum
+	        if (this.isRange) {
+	          minVal = this._value && this._value[0] || this.min;
+	        } else {
+	          minVal = this._value && this._value[0] <= val ? this._value[0] : this.min;
+	        }
 	        val = [minVal, val];
 	      }
 
