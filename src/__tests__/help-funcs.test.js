@@ -39,7 +39,7 @@ describe('Help functions:', function () {
     it('should round decimal up to precision of 10 places', function () {
       expect(helpFuncs.roundValue(0.0)).toBe(0);
       expect(helpFuncs.roundValue(0)).toBe(0);
-      expect(helpFuncs.roundValue(-0)).toBe(-0);
+      expect(helpFuncs.roundValue(-0)).toBe(0);
       expect(helpFuncs.roundValue(1.0)).toBe(1);
       expect(helpFuncs.roundValue(1.2)).toBe(1.2);
       expect(helpFuncs.roundValue(5.00000)).toBe(5);
