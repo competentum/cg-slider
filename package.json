@@ -1,6 +1,6 @@
 {
   "name": "cg-slider",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Accessible Slider Component",
   "main": "build/cg-slider.min.js",
   "pre-commit": [
@@ -20,9 +20,10 @@
   },
   "keywords": [
     "slider",
-    "ADA"
+    "a11y",
+    "accessibility"
   ],
-  "author": "Alexey Pilyugin",
+  "author": "Competentum Group",
   "license": "MIT",
   "devDependencies": {
     "babel-core": "^6.18.0",
