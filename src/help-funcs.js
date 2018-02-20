@@ -119,5 +119,22 @@ export default {
     else {
       element.removeAttribute(attrName);
     }
+  },
+
+
+  /**
+   * Removes all `parent` children
+   * @param {Element} parent
+   */
+  removeChildElements: function (parent) {
+    if (!parent || parent.tagName === 'HTML') {
+      return;
+    }
+
+    while (parent.lastChild) {
+      parent.removeChild(parent.lastChild);
+    }
+
+    return parent;
   }
 };

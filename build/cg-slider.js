@@ -1,7 +1,7 @@
 /*!
  * cg-slider v0.1.6 - Accessible Slider Component
  * 
- * (c) 2015-2017 Competentum Group | http://competentum.com
+ * (c) 2015-2018 Competentum Group | http://competentum.com
  * Released under the MIT license
  * https://opensource.org/licenses/mit-license.php
  */
@@ -115,6 +115,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	 * @property {number} max - The maximum value of the slider.
 	 * @property {number} step - Determines the size or amount of each interval or step the slider takes between the min and max.
 	 *                           The full specified value range of the slider (max - min) should be evenly divisible by the step.
+	 * @property {boolean|function(Element, number, number):boolean} ticks - Controls slider value ticks. You can configure (or skip) every tick by setting this option as a formatter function.
+	 *                          The formatter function receives:
+	 *                          `tick` DOM Element, `currentStep` number value, calculated `offsetPercent` percent number from the left side of a tick parent.
+	 *                          Return falsy value from the formatter to skip the tick creation.
 	 * @property {number|number[]} tabindex - Tabindex of handle element. It can be array of two numbers for the range slider.
 	 * @property {string|string[]} ariaLabel - String that labels the current slider for screen readers. It can be array of two strings the for range slider.
 	 *                                         For more info see [WAI-ARIA specification/#aria-label]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-label}.
@@ -135,6 +139,8 @@ return /******/ (function(modules) { // webpackBootstrap
 	var HANDLE_CLASS = SLIDER_CLASS + '-handle';
 	var MIN_HANDLE_CLASS = SLIDER_CLASS + '-handle-min';
 	var MAX_HANDLE_CLASS = SLIDER_CLASS + '-handle-max';
+	var TICKS_CLASS = SLIDER_CLASS + '-ticks';
+	var TICKS_ITEM_CLASS = SLIDER_CLASS + '-tick';
 
 	var LARGE_CHANGE_MULTIPLIER = 10;
 
@@ -305,6 +311,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'max':
 	        case 'step':
 	        case 'isRange':
+	        case 'ticks':
 	        case 'ariaValueTextFormatter':
 	          return this._settings[name];
 
@@ -347,7 +354,12 @@ return /******/ (function(modules) { // webpackBootstrap
 	          }
 
 	          this._updateAriaLimits();
-	          //todo: redraw ticks
+	          this._updateTicks();
+	          break;
+
+	        case 'ticks':
+	          this._settings[name] = val;
+	          this._updateTicks();
 	          break;
 
 	        //todo: remove this setting from this method to make it readable only.
@@ -644,9 +656,10 @@ return /******/ (function(modules) { // webpackBootstrap
 	        rootClasses.push(RANGE_CLASS);
 	      }
 
-	      var elementHTML = '\n      <div class="' + rootClasses.join(' ') + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MIN_HANDLE_CLASS + '" tabindex="' + this._settings.tabindex[0] + '" role="slider" aria-orientation="horizontal"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MAX_HANDLE_CLASS + '" tabindex="' + this._settings.tabindex[1] + '" role="slider" aria-orientation="horizontal"></div>\n        </div>\n      </div>\n    ';
+	      var elementHTML = '\n      <div class="' + rootClasses.join(' ') + '">\n        <div class="' + SLIDER_BG + '">\n          <div class="' + PROGRESS_CLASS + '"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MIN_HANDLE_CLASS + '" tabindex="' + this._settings.tabindex[0] + '" role="slider" aria-orientation="horizontal"></div>\n          <div class="' + HANDLE_CLASS + ' ' + MAX_HANDLE_CLASS + '" tabindex="' + this._settings.tabindex[1] + '" role="slider" aria-orientation="horizontal"></div>\n        </div>\n        <div class="' + TICKS_CLASS + '" aria-hidden="true"></div>\n      </div>\n    ';
 
 	      this._rootElement = _cgComponentUtils2.default.createHTML(elementHTML);
+	      this._ticksElement = this._rootElement.querySelector('.' + TICKS_CLASS);
 	      this._progressElement = this._rootElement.querySelector('.' + PROGRESS_CLASS);
 	      this._handlesContainer = this._rootElement.querySelector('.' + SLIDER_BG);
 	      this._minHandleElement = this._handlesContainer.querySelector('.' + MIN_HANDLE_CLASS);
@@ -655,8 +668,48 @@ return /******/ (function(modules) { // webpackBootstrap
 	      this._updateAriaLimits();
 	      this._updateAriaLabels();
 	      this._updateDisabled();
+	      this._updateTicks();
 
 	      this.container.appendChild(this._rootElement);
+	    }
+
+	    /**
+	     * Get percentage offset & add ticks
+	     * @private
+	     */
+
+	  }, {
+	    key: '_updateTicks',
+	    value: function _updateTicks() {
+	      var ticks = this._settings.ticks;
+
+
+	      if (!this._ticksElement) return;
+
+	      _helpFuncs2.default.removeChildElements(this._ticksElement);
+
+	      if (!ticks) return;
+
+	      var tickFrag = document.createDocumentFragment();
+
+	      var currentStep = this.min;
+	      while (_helpFuncs2.default.roundValue(currentStep) <= this.max) {
+	        var offsetPercent = _helpFuncs2.default.getPercent(currentStep, this.max, this.min);
+	        var tick = document.createElement('div');
+	        tick.classList.add(TICKS_ITEM_CLASS);
+	        tick.style['left'] = offsetPercent + '%';
+
+	        var formatterResult = typeof ticks === 'function' ? ticks.call(this, tick, currentStep, offsetPercent) : undefined;
+
+	        if (typeof formatterResult === 'undefined' || formatterResult) {
+	          tickFrag.appendChild(tick);
+	        }
+
+	        tick = null;
+	        currentStep += this.step;
+	      }
+
+	      this._ticksElement.appendChild(tickFrag);
 	    }
 	  }, {
 	    key: '_updateAriaLabels',
@@ -985,6 +1038,26 @@ return /******/ (function(modules) { // webpackBootstrap
 
 	    /**
 	     *
+	     * @returns {boolean|function}
+	     */
+
+	  }, {
+	    key: 'ticks',
+	    get: function get() {
+	      return this.getSetting('ticks');
+	    }
+
+	    /**
+	     *
+	     * @param {boolean|function} val
+	     */
+	    ,
+	    set: function set(val) {
+	      this.setSetting('ticks', val);
+	    }
+
+	    /**
+	     *
 	     * @returns {number|number[]}
 	     */
 
@@ -1039,6 +1112,7 @@ return /******/ (function(modules) { // webpackBootstrap
 	  min: 0,
 	  max: 100,
 	  step: 1,
+	  ticks: false,
 	  tabindex: [0, 0],
 	  ariaLabel: '',
 	  ariaLabelledBy: '',
@@ -1091,7 +1165,7 @@ return /******/ (function(modules) { // webpackBootstrap
 
 
 	// module
-	exports.push([module.id, ".cg-slider {\n  padding: 10px 13px;\n  position: relative;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  box-sizing: border-box;\n}\n.cg-slider .cg-slider-bg {\n  height: 6px;\n  background: #aaaaaa;\n  position: relative;\n}\n.cg-slider .cg-slider-progress {\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle {\n  top: 50%;\n  left: 0;\n  border-radius: 50%;\n  position: absolute;\n  height: 18px;\n  width: 18px;\n  background: #17AC5B;\n  cursor: pointer;\n  margin-left: -9px;\n  margin-top: -9px;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:after {\n  content: \"\";\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  top: 0;\n  border-radius: 50%;\n}\n.cg-slider .cg-slider-handle:after {\n  transition: left 0.3s, right 0.3s, bottom 0.3s, top 0.3s;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  left: -4px;\n  right: -4px;\n  bottom: -4px;\n  top: -4px;\n}\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle:focus {\n  outline: none;\n}\n.cg-slider .cg-slider-handle:focus:before {\n  background-color: rgba(23, 172, 91, 0.4);\n}\n.cg-slider .cg-slider-handle-min {\n  display: none;\n}\n.cg-slider.cg-slider-range .cg-slider-handle-min {\n  display: block;\n}\n.cg-slider[disabled=true] {\n  opacity: 0.6;\n}\n.cg-slider[disabled=true] .cg-slider-handle {\n  cursor: auto;\n}\n.cg-slider[disabled=true] .cg-slider-handle:before,\n.cg-slider[disabled=true] .cg-slider-handle:after {\n  display: none;\n}\n", ""]);
+	exports.push([module.id, ".cg-slider {\n  padding: 10px 13px;\n  position: relative;\n  -webkit-user-select: none;\n     -moz-user-select: none;\n      -ms-user-select: none;\n          user-select: none;\n  box-sizing: border-box;\n}\n.cg-slider .cg-slider-bg {\n  height: 6px;\n  background: #aaaaaa;\n  position: relative;\n}\n.cg-slider .cg-slider-progress {\n  position: absolute;\n  top: 0;\n  left: 0;\n  height: 100%;\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle {\n  top: 50%;\n  left: 0;\n  border-radius: 50%;\n  position: absolute;\n  height: 18px;\n  width: 18px;\n  background: #17AC5B;\n  cursor: pointer;\n  margin-left: -9px;\n  margin-top: -9px;\n  z-index: 1;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:after {\n  content: \"\";\n  position: absolute;\n  left: 0;\n  right: 0;\n  bottom: 0;\n  top: 0;\n  border-radius: 50%;\n}\n.cg-slider .cg-slider-handle:after {\n  transition: left 0.3s, right 0.3s, bottom 0.3s, top 0.3s;\n}\n.cg-slider .cg-slider-handle:before,\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  left: -4px;\n  right: -4px;\n  bottom: -4px;\n  top: -4px;\n}\n.cg-slider .cg-slider-handle:hover:after,\n.cg-slider .cg-slider-handle:active:after {\n  background: #17AC5B;\n}\n.cg-slider .cg-slider-handle:focus {\n  outline: none;\n}\n.cg-slider .cg-slider-handle:focus:before {\n  background-color: rgba(23, 172, 91, 0.4);\n}\n.cg-slider .cg-slider-ticks {\n  position: relative;\n  width: 100%;\n  top: -20px;\n}\n.cg-slider .cg-slider-ticks .cg-slider-tick {\n  position: absolute;\n  height: 6px;\n  width: 2px;\n  margin-left: -1px;\n  background: #aaaaaa;\n}\n.cg-slider .cg-slider-handle-min {\n  display: none;\n}\n.cg-slider.cg-slider-range .cg-slider-handle-min {\n  display: block;\n}\n.cg-slider[disabled=true] {\n  opacity: 0.6;\n}\n.cg-slider[disabled=true] .cg-slider-handle {\n  cursor: auto;\n}\n.cg-slider[disabled=true] .cg-slider-handle:before,\n.cg-slider[disabled=true] .cg-slider-handle:after {\n  display: none;\n}\n", ""]);
 
 	// exports
 
@@ -2306,6 +2380,22 @@ return /******/ (function(modules) { // webpackBootstrap
 	    } else {
 	      element.removeAttribute(attrName);
 	    }
+	  },
+
+	  /**
+	   * Removes all `parent` children
+	   * @param {Element} parent
+	   */
+	  removeChildElements: function removeChildElements(parent) {
+	    if (!parent || parent.tagName === 'HTML') {
+	      return;
+	    }
+
+	    while (parent.lastChild) {
+	      parent.removeChild(parent.lastChild);
+	    }
+
+	    return parent;
 	  }
 	};
 

@@ -1,5 +1,9 @@
 'use strict';
 var helpFuncs = require('./../help-funcs').default;
+var jsdom = require('jsdom');
+var JSDOM = jsdom.JSDOM;
+var dom, window, document;
+var testHtml = '<!DOCTYPE html><html><head></head><body><div id="app"><p>Hello, world! <!-- comment --><span id="span_with_space"> </span></p></div></body></html>';
 
 describe('Help functions:', function () {
 
@@ -35,7 +39,7 @@ describe('Help functions:', function () {
     it('should round decimal up to precision of 10 places', function () {
       expect(helpFuncs.roundValue(0.0)).toBe(0);
       expect(helpFuncs.roundValue(0)).toBe(0);
-      expect(helpFuncs.roundValue(-0)).toBe(-0);
+      expect(helpFuncs.roundValue(-0)).toBe(0);
       expect(helpFuncs.roundValue(1.0)).toBe(1);
       expect(helpFuncs.roundValue(1.2)).toBe(1.2);
       expect(helpFuncs.roundValue(5.00000)).toBe(5);
@@ -75,4 +79,29 @@ describe('Help functions:', function () {
     });
   });
 
+  describe('DOM manipulation', function () {
+    beforeEach(function () {
+      dom = new JSDOM(testHtml);
+      window = dom.window;
+      document = dom.window.document;
+    });
+
+    describe('removeChildElements', function () {
+      test('it deletes all DOM children', function () {
+        expect(document.body.children.length).toBe(1);
+        var childlessElem = helpFuncs.removeChildElements(document.body);
+        expect(childlessElem).toBeDefined();
+        expect(childlessElem.tagName).toBe('BODY');
+        expect(childlessElem).toEqual(document.body);
+        expect(childlessElem.children.length).toBe(0);
+      });
+
+      test('it wont remove BODY from HTML', function () {
+        expect(document.body).toBeDefined();
+        var result = helpFuncs.removeChildElements(document.documentElement);
+        expect(result).toBeUndefined();
+        expect(document.body).toBeDefined();
+      });
+    });
+  });  
 });

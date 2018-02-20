@@ -26,7 +26,7 @@
   "license": "MIT",
   "devDependencies": {
     "babel-core": "^6.18.0",
-    "babel-eslint": "^7.1.1",
+    "babel-eslint": "^7.2.3",
     "babel-jest": "^17.0.2",
     "babel-loader": "^6.2.7",
     "babel-preset-es2015": "^6.18.0",
@@ -34,14 +34,16 @@
     "cg-components-banner": "latest",
     "concurrently": "^3.1.0",
     "css-loader": "^0.23.1",
-    "eslint": "^3.11.1",
+    "eslint": "^3.19.0",
     "gulp": "^3.9.1",
     "gulp-eslint": "^3.0.1",
     "gulp-jest": "^0.6.0",
     "gulp-util": "^3.0.7",
     "gulp-webpack": "^1.5.0",
     "http-server": "^0.9.0",
-    "jest-cli": "^17.0.3",
+    "jest": "^22.3.0",
+    "jest-cli": "^22.3.0",
+    "jsdom": "^11.5.1",
     "less": "^2.6.1",
     "less-loader": "^2.2.2",
     "path": "^0.12.7",
@@ -60,5 +62,7 @@
     "keycode": "^2.1.8",
     "merge": "^1.2.0"
   },
-  "files": ["build"]
+  "files": [
+    "build"
+  ]
 }
