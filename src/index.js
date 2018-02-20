@@ -21,6 +21,10 @@ import helpFuncs from './help-funcs';
  * @property {number} max - The maximum value of the slider.
  * @property {number} step - Determines the size or amount of each interval or step the slider takes between the min and max.
  *                           The full specified value range of the slider (max - min) should be evenly divisible by the step.
+ * @property {boolean|function(Element, number, number):boolean} ticks - Controls slider value ticks. You can configure (or skip) every tick by setting this option as a formatter function.
+ *                          The formatter function receives:
+ *                          `tick` DOM Element, `currentStep` number value, calculated `offsetPercent` percent number from the left side of a tick parent.
+ *                          Return falsy value from the formatter to skip the tick creation.
  * @property {number|number[]} tabindex - Tabindex of handle element. It can be array of two numbers for the range slider.
  * @property {string|string[]} ariaLabel - String that labels the current slider for screen readers. It can be array of two strings the for range slider.
  *                                         For more info see [WAI-ARIA specification/#aria-label]{@link https://www.w3.org/TR/wai-aria-1.1/#aria-label}.
@@ -41,6 +45,8 @@ const PROGRESS_CLASS = `${SLIDER_CLASS}-progress`;
 const HANDLE_CLASS = `${SLIDER_CLASS}-handle`;
 const MIN_HANDLE_CLASS = `${SLIDER_CLASS}-handle-min`;
 const MAX_HANDLE_CLASS = `${SLIDER_CLASS}-handle-max`;
+const TICKS_CLASS = `${SLIDER_CLASS}-ticks`;
+const TICKS_ITEM_CLASS= `${SLIDER_CLASS}-tick`;
 
 const LARGE_CHANGE_MULTIPLIER = 10;
 
@@ -57,6 +63,7 @@ class CgSlider extends EventEmitter {
     min: 0,
     max: 100,
     step: 1,
+    ticks: false,
     tabindex: [0, 0],
     ariaLabel: '',
     ariaLabelledBy: '',
@@ -354,6 +361,22 @@ class CgSlider extends EventEmitter {
 
   /**
    *
+   * @returns {boolean|function}
+   */
+  get ticks() {
+    return this.getSetting('ticks');
+  }
+
+  /**
+   *
+   * @param {boolean|function} val
+   */
+  set ticks(val) {
+    this.setSetting('ticks', val);
+  }
+
+  /**
+   *
    * @returns {number|number[]}
    */
   get tabindex() {
@@ -399,6 +422,7 @@ class CgSlider extends EventEmitter {
       case 'max':
       case 'step':
       case 'isRange':
+      case 'ticks':  
       case 'ariaValueTextFormatter':
         return this._settings[name];
 
@@ -438,8 +462,13 @@ class CgSlider extends EventEmitter {
         }
 
         this._updateAriaLimits();
-        //todo: redraw ticks
+        this._updateTicks();
         break;
+      
+      case 'ticks':
+        this._settings[name] = val;
+        this._updateTicks();
+        break;  
 
       //todo: remove this setting from this method to make it readable only.
       case 'isRange':
@@ -736,10 +765,12 @@ class CgSlider extends EventEmitter {
           <div class="${HANDLE_CLASS} ${MIN_HANDLE_CLASS}" tabindex="${this._settings.tabindex[0]}" role="slider" aria-orientation="horizontal"></div>
           <div class="${HANDLE_CLASS} ${MAX_HANDLE_CLASS}" tabindex="${this._settings.tabindex[1]}" role="slider" aria-orientation="horizontal"></div>
         </div>
+        <div class="${TICKS_CLASS}" aria-hidden="true"></div>
       </div>
     `;
 
     this._rootElement = utils.createHTML(elementHTML);
+    this._ticksElement = this._rootElement.querySelector(`.${TICKS_CLASS}`);
     this._progressElement = this._rootElement.querySelector(`.${PROGRESS_CLASS}`);
     this._handlesContainer = this._rootElement.querySelector(`.${SLIDER_BG}`);
     this._minHandleElement = this._handlesContainer.querySelector(`.${MIN_HANDLE_CLASS}`);
@@ -748,8 +779,47 @@ class CgSlider extends EventEmitter {
     this._updateAriaLimits();
     this._updateAriaLabels();
     this._updateDisabled();
+    this._updateTicks();
 
     this.container.appendChild(this._rootElement);
+  }
+
+  /**
+   * Get percentage offset & add ticks
+   * @private
+   */
+  _updateTicks() {
+    const { ticks } = this._settings;
+
+    if (!this._ticksElement)
+      return;
+
+    helpFuncs.removeChildElements(this._ticksElement);
+
+    if (!ticks)
+      return;
+
+    const tickFrag = document.createDocumentFragment();
+    
+    let currentStep = this.min;
+    while (helpFuncs.roundValue(currentStep) <= this.max) {
+      const offsetPercent = helpFuncs.getPercent(currentStep, this.max, this.min);
+      let tick = document.createElement('div');
+      tick.classList.add(TICKS_ITEM_CLASS);
+      tick.style['left'] = `${offsetPercent}%`;
+
+      const formatterResult = typeof ticks === 'function' ?
+        ticks.call(this, tick, currentStep, offsetPercent) : undefined;
+      
+      if (typeof formatterResult === 'undefined' || formatterResult) {
+        tickFrag.appendChild(tick);
+      }
+      
+      tick = null;
+      currentStep += this.step;
+    }
+
+    this._ticksElement.appendChild(tickFrag);
   }
 
   _updateAriaLabels() {
