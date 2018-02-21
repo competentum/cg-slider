@@ -28,3 +28,25 @@
     slider.value = val;
   }
 })();
+
+/**
+ * #8 text aria-* attributes bug
+ */
+(function () {
+  var slider = new CgSlider({
+    container: 'sliderAria',
+    min: 1,
+    max: 5,
+    step: 1,
+    initialValue: 1,
+    ariaLabel: 'Aria label',
+    ariaLabelledBy: 'some-label-id',
+    ariaDescribedBy: 'some-desc-id'
+  });
+
+  document.querySelector('#newArias').addEventListener('click', () => {
+    slider.ariaLabel = 'New aria label';
+    slider.ariaLabelledBy = 'new-label-id';
+    slider.ariaDescribedBy = 'new-desc-id';
+  });
+})();

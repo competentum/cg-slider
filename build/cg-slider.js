@@ -224,15 +224,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	  }, {
 	    key: '_fixSettings',
 	    value: function _fixSettings(settings) {
-	      // aria labels priority
-	      if (settings.ariaDescribedBy) {
-	        settings.ariaLabel = '';
-	        settings.ariaLabelledBy = '';
-	      }
-	      if (settings.ariaLabelledBy) {
-	        settings.ariaLabel = '';
-	      }
-
 	      for (var name in settings) {
 	        if (settings.hasOwnProperty(name)) {
 	          settings[name] = this._fixSetting(name, settings[name]);
@@ -381,10 +372,6 @@ return /******/ (function(modules) { // webpackBootstrap
 	        case 'ariaLabel':
 	        case 'ariaLabelledBy':
 	        case 'ariaDescribedBy':
-	          // clear other aria label settings
-	          this._settings.ariaLabel = ['', ''];
-	          this._settings.ariaLabelledBy = ['', ''];
-	          this._settings.ariaDescribedBy = ['', ''];
 	          this._settings[name] = val;
 
 	          this._updateAriaLabels();
