@@ -511,6 +511,19 @@ class CgSlider extends EventEmitter {
   }
 
   /**
+   * Move slider `stepCount` steps back or forward
+   * @param {number|number[]} stepCount Positive or negative integer
+   */
+  move(stepCount) {
+    if (Array.isArray(stepCount)) {
+      this.value = stepCount
+        .map((count, index) => this._value[index] + this.step * count);
+    } else if (typeof stepCount === 'number') {
+      this.value = this._value[1] + this.step * stepCount;
+    }
+  }
+
+  /**
    * @private
    */
   _addListeners() {
