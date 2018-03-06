@@ -1,5 +1,5 @@
 /*!
- * cg-slider v0.1.7 - Accessible Slider Component
+ * cg-slider v0.1.8 - Accessible Slider Component
  * 
  * (c) 2015-2018 Competentum Group | http://competentum.com
  * Released under the MIT license
