@@ -128,6 +128,11 @@ For the range slider it should be array of two numbers the first of which must b
 
 ### Instance methods
 
+#### `.move(stepCount)`
+- `stepCount` *{number|number[]}* Positive or negative integer or array of two integers (for each handle when type is range)
+
+Move slider `stepCount` steps back or forward (use negative integer for moving back).
+
 #### `.getSetting(name)`
 - `name` *{string}* Name of the setting.
 

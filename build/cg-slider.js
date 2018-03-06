@@ -403,6 +403,25 @@ return /******/ (function(modules) { // webpackBootstrap
 	    }
 
 	    /**
+	     * Move slider `stepCount` steps back or forward
+	     * @param {number|number[]} stepCount Positive or negative integer
+	     */
+
+	  }, {
+	    key: 'move',
+	    value: function move(stepCount) {
+	      var _this2 = this;
+
+	      if (Array.isArray(stepCount)) {
+	        this.value = stepCount.map(function (count, index) {
+	          return _this2._value[index] + _this2.step * count;
+	        });
+	      } else if (typeof stepCount === 'number') {
+	        this.value = this._value[1] + this.step * stepCount;
+	      }
+	    }
+
+	    /**
 	     * @private
 	     */
 

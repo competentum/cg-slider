@@ -70,10 +70,15 @@ body {
     text-align: center;
 }
 
-#sliderValue {
+.slider-value {
     background-color: #17AC5B;
     font-size: 1.2rem;
     color: #fff;
+}
+
+.slider-btn {
+    width: 30px;
+    height: 30px;
 }
 
 #events_log {
