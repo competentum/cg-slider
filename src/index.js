@@ -682,6 +682,13 @@ class CgSlider extends EventEmitter {
 
       self._setValue(value);
 
+      // prevent surrounding element selection in Safari
+      if (document.selection) {
+        document.selection.empty();
+      } else {
+        window.getSelection().removeAllRanges();
+      }
+
       e.preventDefault();
     }
 
