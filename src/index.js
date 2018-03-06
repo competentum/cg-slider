@@ -147,15 +147,6 @@ class CgSlider extends EventEmitter {
    * @private
    */
   static _fixSettings(settings) {
-    // aria labels priority
-    if (settings.ariaDescribedBy) {
-      settings.ariaLabel = '';
-      settings.ariaLabelledBy = '';
-    }
-    if (settings.ariaLabelledBy) {
-      settings.ariaLabel = '';
-    }
-
     for (let name in settings) {
       if (settings.hasOwnProperty(name)) {
         settings[name] = this._fixSetting(name, settings[name]);
@@ -489,10 +480,6 @@ class CgSlider extends EventEmitter {
       case 'ariaLabel':
       case 'ariaLabelledBy':
       case 'ariaDescribedBy':
-        // clear other aria label settings
-        this._settings.ariaLabel = ['', ''];
-        this._settings.ariaLabelledBy = ['', ''];
-        this._settings.ariaDescribedBy = ['', ''];
         this._settings[name] = val;
 
         this._updateAriaLabels();
