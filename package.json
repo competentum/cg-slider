@@ -12,7 +12,9 @@
     "lint": "gulp lint",
     "test": "npm run u-test && npm run e2e-test",
     "e2e-test": "npm run build && concurrently -r -k -s first \"http-server ./build -p 4000 -s\" \"testcafe chrome ./test/e2e/**\"",
-    "u-test": "jest"
+    "u-test": "jest",
+    "release": "npm run build && npm run deploy",
+    "deploy": "node dev/ftp.deploy.js"
   },
   "repository": {
     "type": "git",
@@ -54,6 +56,8 @@
     "testcafe": "^0.18.6",
     "uppercamelcase": "^1.1.0",
     "url-loader": "^0.5.7",
+    "vinyl-fs": "^3.0.3",
+    "vinyl-ftp": "^0.6.1",
     "webpack": "^1.12.14",
     "webpack-dev-server": "^1.14.1"
   },
@@ -61,7 +65,8 @@
     "cg-component-utils": "^1.0.0",
     "events": "^1.1.0",
     "keycode": "^2.1.8",
-    "merge": "^1.2.0"
+    "merge": "^1.2.0",
+    "natives": "^1.1.6"
   },
   "files": [
     "build"
