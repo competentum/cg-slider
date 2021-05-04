@@ -65,7 +65,7 @@
     "cg-component-utils": "^1.0.0",
     "events": "^1.1.0",
     "keycode": "^2.1.8",
-    "merge": "^1.2.0",
+    "merge": "^2.1.1",
     "natives": "^1.1.6"
   },
   "files": [
