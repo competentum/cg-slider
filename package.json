@@ -38,7 +38,7 @@
     "concurrently": "^3.1.0",
     "css-loader": "^0.23.1",
     "eslint": "^3.19.0",
-    "gulp": "^3.9.1",
+    "gulp": "^4.0.2",
     "gulp-eslint": "^3.0.1",
     "gulp-jest": "^0.6.0",
     "gulp-util": "^3.0.7",
